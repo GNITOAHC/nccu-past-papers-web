@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>{{ .Title }}</title>
+  </head>
+  <body class="p-16">
+    <h1>{{ .Title }}</h1>
+    <ul>
+      {{ range .Items }} {{ if .IsTree }}
+      <li><a href="{{ .Link }}" class="underline">{{ .Name }}</a></li>
+      {{ else }}
+      <li><a href="{{ .Link }}">{{ .Name }}</a></li>
+      {{ end }} {{ end }}
+    </ul>
+
+    <form method="post" action="" class="h-20" enctype="multipart/form-data">
+      <input type="text" name="name" placeholder="Name" />
+      <input type="file" name="file" placeholder="File Input" />
+      <button type="submit">Add</button>
+    </form>
+  </body>
+</html>
