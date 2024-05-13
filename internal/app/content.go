@@ -7,8 +7,9 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 
-	b64 "encoding/base64"
+	"encoding/base64"
 
 	"past-papers-web/internal/helper"
 )
@@ -26,8 +27,8 @@ func (a *App) uploadFile(w http.ResponseWriter, r *http.Request) {
 	if _, err := io.Copy(buf, file); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
-	dst := make([]byte, b64.StdEncoding.EncodedLen(len(buf.Bytes())))
-	b64.StdEncoding.Strict().Encode(dst, buf.Bytes())
+	dst := make([]byte, base64.StdEncoding.EncodedLen(len(buf.Bytes())))
+	base64.StdEncoding.Strict().Encode(dst, buf.Bytes())
 
 	newBranchName := "upload-from-" + name
 	newBranchSha, err := a.helper.CreateBranch(newBranchName)
@@ -61,21 +62,29 @@ func (a *App) uploadFile(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func (a *App) handlePDFFile(w http.ResponseWriter, r *http.Request) {
+func (a *App) handleFile(w http.ResponseWriter, r *http.Request, contentType string) {
 	urlpath := r.URL.Path[len("/content/"):]
-	pdfData, err := a.helper.GetFile(urlpath)
-	if err != nil {
-		fmt.Fprintf(w, "%s", err)
+
+	var pdfData []byte
+	if data, has := a.filecache.Get(urlpath); has { // Has file in cache
+		pdfData = data
+	} else {
+		data, err := a.helper.GetFile(urlpath)
+		if err != nil {
+			fmt.Fprintf(w, "%s", err)
+		}
+		a.filecache.Set(urlpath, data, time.Duration(time.Hour*360)) // Cache for 15 days
+		pdfData = data
 	}
 
 	b := bytes.NewBuffer(pdfData)
 
-	w.Header().Set("Content-type", "application/pdf")
+	w.Header().Set("Content-type", contentType)
 	if _, err := b.WriteTo(w); err != nil {
 		fmt.Fprintf(w, "%s", err)
 	}
 
-	w.Write([]byte("PDF Generated"))
+	w.Write([]byte("File Generated"))
 	return
 }
 
@@ -89,7 +98,13 @@ func (a *App) HandleContent(w http.ResponseWriter, r *http.Request) {
 	urlpath := r.URL.Path[len("/content/"):]
 
 	if strings.HasSuffix(urlpath, ".pdf") {
-		a.handlePDFFile(w, r)
+		a.handleFile(w, r, "application/pdf")
+		return
+	} else if strings.HasSuffix(urlpath, ".png") {
+		a.handleFile(w, r, "image/png")
+		return
+	} else if strings.HasSuffix(urlpath, ".jpg") || strings.HasSuffix(urlpath, ".jpeg") {
+		a.handleFile(w, r, "image/jpeg")
 		return
 	}
 

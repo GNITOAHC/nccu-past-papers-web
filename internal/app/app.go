@@ -19,8 +19,9 @@ var (
 )
 
 type App struct {
-	helper *helper.Helper
-	cache  *cache.Cache[string, interface{}]
+	helper    *helper.Helper
+	usercache *cache.Cache[string, interface{}]
+	filecache *cache.Cache[string, []byte]
 }
 
 func StartServer() {
@@ -40,10 +41,12 @@ func StartServer() {
 
 func NewApp() *App {
 	config := config.NewConfig()
-	cache := cache.New[string, interface{}]()
+	usercache := cache.New[string, interface{}]()
+	filecache := cache.New[string, []byte]()
 	return &App{
-		helper: helper.NewHelper(config),
-		cache:  cache,
+		helper:    helper.NewHelper(config),
+		usercache: usercache,
+		filecache: filecache,
 	}
 }
 
@@ -74,11 +77,11 @@ func (a *App) Login(w http.ResponseWriter, r *http.Request) {
 			SameSite: http.SameSiteLaxMode,
 		})
 
-		if _, ok := a.cache.Get(email); ok {
+		if _, ok := a.usercache.Get(email); ok {
 			http.Redirect(w, r, "/tree", http.StatusSeeOther)
 			return
 		} else {
-			a.cache.Set(email, true, time.Duration(time.Hour*720)) // 30 days
+			a.usercache.Set(email, true, time.Duration(time.Hour*720)) // 30 days
 		}
 		if a.helper.CheckUser(email) { // Has user in DB
 			http.Redirect(w, r, "/tree", http.StatusSeeOther)
@@ -104,12 +107,12 @@ func (a *App) middlewares(next http.Handler) http.Handler {
 			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
 		}
-		if _, ok := a.cache.Get(cookie.Value); ok { // Has user in cache
-			a.cache.Set(cookie.Value, true, time.Duration(time.Hour*720))
+		if _, ok := a.usercache.Get(cookie.Value); ok { // Has user in cache
 			next.ServeHTTP(w, r)
 			return
 		}
 		if a.helper.CheckUser(cookie.Value) { // Has user in DB
+			a.usercache.Set(cookie.Value, true, time.Duration(time.Hour*720))
 			next.ServeHTTP(w, r)
 			return
 		}
