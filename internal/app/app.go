@@ -7,7 +7,9 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"time"
 
+	"past-papers-web/internal/cache"
 	"past-papers-web/internal/config"
 	"past-papers-web/internal/helper"
 )
@@ -18,6 +20,7 @@ var (
 
 type App struct {
 	helper *helper.Helper
+	cache  *cache.Cache[string, interface{}]
 }
 
 func StartServer() {
@@ -37,8 +40,10 @@ func StartServer() {
 
 func NewApp() *App {
 	config := config.NewConfig()
+	cache := cache.New[string, interface{}]()
 	return &App{
 		helper: helper.NewHelper(config),
+		cache:  cache,
 	}
 }
 
@@ -69,6 +74,12 @@ func (a *App) Login(w http.ResponseWriter, r *http.Request) {
 			SameSite: http.SameSiteLaxMode,
 		})
 
+		if _, ok := a.cache.Get(email); ok {
+			http.Redirect(w, r, "/tree", http.StatusSeeOther)
+			return
+		} else {
+			a.cache.Set(email, true, time.Duration(time.Hour*720)) // 30 days
+		}
 		if a.helper.CheckUser(email) { // Has user in DB
 			http.Redirect(w, r, "/tree", http.StatusSeeOther)
 			return
@@ -91,6 +102,11 @@ func (a *App) middlewares(next http.Handler) http.Handler {
 		cookie, err := r.Cookie("email")
 		if err != nil { // Error occuring while getting cookie
 			http.Redirect(w, r, "/", http.StatusSeeOther)
+			return
+		}
+		if _, ok := a.cache.Get(cookie.Value); ok { // Has user in cache
+			a.cache.Set(cookie.Value, true, time.Duration(time.Hour*720))
+			next.ServeHTTP(w, r)
 			return
 		}
 		if a.helper.CheckUser(cookie.Value) { // Has user in DB
