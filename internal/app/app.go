@@ -52,9 +52,9 @@ func NewApp() *App {
 
 func (a *App) Routes() http.Handler {
 	mux := http.NewServeMux()
-	mux.Handle("/", a.middlewares(http.HandlerFunc(a.Login)))
-	mux.Handle("/tree", a.middlewares(http.HandlerFunc(a.GetStructure)))
-	mux.Handle("/content/", a.middlewares(http.HandlerFunc(a.HandleContent)))
+	mux.HandleFunc("/", a.Login)
+	mux.HandleFunc("/tree", a.loginProtect(a.GetStructure))
+	mux.HandleFunc("/content/", a.loginProtect(a.HandleContent))
 	return mux
 }
 
@@ -68,8 +68,7 @@ func (a *App) Login(w http.ResponseWriter, r *http.Request) {
 	}
 	if r.Method == "POST" {
 		email := r.FormValue("email")
-		// Set a cookie
-		http.SetCookie(w, &http.Cookie{
+		http.SetCookie(w, &http.Cookie{ // Set a cookie
 			Name:     "email",
 			Value:    email,
 			MaxAge:   3600,
@@ -77,13 +76,12 @@ func (a *App) Login(w http.ResponseWriter, r *http.Request) {
 			SameSite: http.SameSiteLaxMode,
 		})
 
-		if _, ok := a.usercache.Get(email); ok {
+		if _, ok := a.usercache.Get(email); ok { // Has user in cache
 			http.Redirect(w, r, "/tree", http.StatusSeeOther)
 			return
-		} else {
-			a.usercache.Set(email, true, time.Duration(time.Hour*720)) // 30 days
 		}
 		if a.helper.CheckUser(email) { // Has user in DB
+			a.usercache.Set(email, true, time.Duration(time.Hour*720)) // Set cache for 30 days
 			http.Redirect(w, r, "/tree", http.StatusSeeOther)
 			return
 		}
@@ -95,15 +93,10 @@ func (a *App) Login(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func (a *App) middlewares(next http.Handler) http.Handler {
+func (a *App) loginProtect(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/" {
-			next.ServeHTTP(w, r)
-			return
-		}
-		// Check if the user is logged in
 		cookie, err := r.Cookie("email")
-		if err != nil { // Error occuring while getting cookie
+		if err != nil { // No cookie
 			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
 		}
