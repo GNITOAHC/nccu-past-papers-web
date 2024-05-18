@@ -120,7 +120,15 @@ func (a *App) HandleContent(w http.ResponseWriter, r *http.Request) {
 	for _, v := range res["tree"].([]interface{}) {
 		if treeItem, ok := v.(map[string]interface{}); ok {
 			if path, ok := treeItem["path"].(string); ok {
-				if strings.HasPrefix(path, urlpath) && len(strings.Split(path, "/")) == len(strings.Split(urlpath, "/"))+1 {
+				if urlpath == "" {
+					if len(strings.Split(path, "/")) == 1 {
+						items = append(items, Item{
+							Link:   path,
+							Name:   path,
+							IsTree: treeItem["type"].(string) == "tree",
+						})
+					}
+				} else if strings.HasPrefix(path, urlpath) && len(strings.Split(path, "/")) == len(strings.Split(urlpath, "/"))+1 {
 					lnk := strings.Split(urlpath, "/")[len(strings.Split(urlpath, "/"))-1] + "/" + strings.Split(path, "/")[len(strings.Split(urlpath, "/"))]
 					items = append(items, Item{
 						Link:   lnk,
@@ -134,7 +142,7 @@ func (a *App) HandleContent(w http.ResponseWriter, r *http.Request) {
 
 	tmpl := template.Must(template.ParseFiles("templates/content.html"))
 	content := map[string]interface{}{
-		"Title": "Content " + urlpath,
+		"Title": "Path >>> " + urlpath,
 		"Items": items,
 	}
 

@@ -8,6 +8,7 @@
   </head>
   <body class="p-16">
     <h1>{{ .Title }}</h1>
+    <button type="button" onclick="javascript:history.back()">Back</button>
     <ul>
       {{ range .Items }} {{ if .IsTree }}
       <li><a href="{{ .Link }}" class="underline">{{ .Name }}</a></li>
