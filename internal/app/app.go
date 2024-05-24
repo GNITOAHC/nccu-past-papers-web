@@ -53,7 +53,6 @@ func NewApp() *App {
 func (a *App) Routes() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", a.Login)
-	mux.HandleFunc("/tree", a.loginProtect(a.GetStructure))
 	mux.HandleFunc("/content/", a.loginProtect(a.HandleContent))
 	return mux
 }
@@ -77,12 +76,12 @@ func (a *App) Login(w http.ResponseWriter, r *http.Request) {
 		})
 
 		if _, ok := a.usercache.Get(email); ok { // Has user in cache
-			http.Redirect(w, r, "/tree", http.StatusSeeOther)
+			http.Redirect(w, r, "/content", http.StatusSeeOther)
 			return
 		}
 		if a.helper.CheckUser(email) { // Has user in DB
 			a.usercache.Set(email, true, time.Duration(time.Hour*720)) // Set cache for 30 days
-			http.Redirect(w, r, "/tree", http.StatusSeeOther)
+			http.Redirect(w, r, "/content", http.StatusSeeOther)
 			return
 		}
 
