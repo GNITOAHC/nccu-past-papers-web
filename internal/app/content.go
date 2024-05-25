@@ -140,7 +140,7 @@ func (a *App) HandleContent(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	tmpl := template.Must(template.ParseFiles("templates/content.html"))
+	tmpl := template.Must(template.ParseFiles("templates/base.html", "templates/content.html"))
 	content := map[string]interface{}{
 		"Title": "Path >>> " + urlpath,
 		"Items": items,

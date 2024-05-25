@@ -59,7 +59,7 @@ func (a *App) Routes() http.Handler {
 
 func (a *App) Login(w http.ResponseWriter, r *http.Request) {
 	renderTmpl := func() {
-		tmpl := template.Must(template.ParseFiles("templates/login.html"))
+		tmpl := template.Must(template.ParseFiles("templates/base.html", "templates/login.html"))
 		err := tmpl.Execute(w, nil)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)

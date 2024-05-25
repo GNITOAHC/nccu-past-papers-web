@@ -1,17 +1,10 @@
-<!doctype html>
-<html>
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script src="https://cdn.tailwindcss.com"></script>
-    <title>Login</title>
-  </head>
-  <body class="p-16">
-    <h1>Login</h1>
+{{ define "body" }}
+<div>
+  <h1>Login</h1>
 
-    <form method="post" action="" class="h-20" enctype="multipart/form-data">
-      <input type="text" name="email" placeholder="example@example.com" />
-      <button type="submit">Login</button>
-    </form>
-  </body>
-</html>
+  <form method="post" action="" class="h-20" enctype="multipart/form-data">
+    <input type="text" name="email" placeholder="example@example.com" />
+    <button type="submit">Login</button>
+  </form>
+</div>
+{{ end }}

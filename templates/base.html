@@ -1,0 +1,114 @@
+<!doctype html>
+<html class="theme-light">
+  {{ template "head" . }} {{ template "style" }}
+  <!-- -->
+  {{ template "themescript" }} {{ template "header" }}
+  <body class="container">
+    {{ template "body" . }}
+  </body>
+</html>
+
+{{ define "head" }}
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+    integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+    crossorigin="anonymous"
+  />
+  <title>{{ .Title }}</title>
+</head>
+{{ end }}
+
+<!-- -->
+
+{{ define "style" }}
+<style>
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+  }
+  .theme-light {
+    --color-primary: #0060df;
+    --color-secondary: #fbfbfe;
+    --color-accent: #fd6f53;
+    --font-color: #000000;
+  }
+  .theme-dark {
+    --color-primary: #457b98;
+    --color-secondary: #243133;
+    --color-accent: #12cdea;
+    --font-color: #ffffff;
+  }
+  .container {
+    width: 100%;
+    height: 100%;
+    background: var(--color-secondary);
+  }
+  .container h1 {
+    color: var(--font-color);
+  }
+  .button {
+    color: var(--font-color);
+    background: var(--color-primary);
+    padding: 0.25rem;
+    border: 0;
+    border-radius: 5px;
+  }
+  .btn-style {
+    padding: 0.25rem;
+    border: 0;
+    border-radius: 5px;
+  }
+</style>
+{{ end }}
+
+<!-- -->
+
+{{ define "themescript" }}
+<script>
+  // function to set a given theme/color-scheme
+  function setTheme(themeName) {
+    localStorage.setItem('theme', themeName)
+    document.documentElement.className = themeName
+  }
+
+  // function to toggle between light and dark theme
+  function toggleTheme() {
+    if (localStorage.getItem('theme') === 'theme-dark') {
+      setTheme('theme-light')
+    } else {
+      setTheme('theme-dark')
+    }
+  }
+
+  // Immediately invoked function to set the theme on initial load
+  ;(function () {
+    if (localStorage.getItem('theme') === 'theme-dark') {
+      setTheme('theme-dark')
+    } else {
+      setTheme('theme-light')
+    }
+  })()
+</script>
+{{ end }}
+
+<!-- -->
+
+{{ define "header" }}
+<header style="height: 2.5rem; background-color: var(--color-primary)">
+  <button
+    type="button"
+    onclick="toggleTheme()"
+    style="color: var(--font-color); background: var(--color-secondary)"
+    class="btn-style"
+  >
+    Toggle Theme
+  </button>
+</header>
+{{ end }}
