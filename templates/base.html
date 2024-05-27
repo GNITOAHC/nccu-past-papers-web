@@ -1,9 +1,9 @@
 <!doctype html>
-<html class="theme-light">
+<html>
   {{ template "head" . }} {{ template "style" }}
   <!-- -->
   {{ template "themescript" }} {{ template "header" }}
-  <body class="container">
+  <body>
     {{ template "body" . }}
   </body>
 </html>
@@ -26,44 +26,11 @@
 
 {{ define "style" }}
 <style>
-  html,
-  body {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    width: 100%;
+  [data-bs-theme='dark'] {
+    --bs-body-bg: rgb(3 8 22);
   }
-  .theme-light {
-    --color-primary: #0060df;
-    --color-secondary: #fbfbfe;
-    --color-accent: #fd6f53;
-    --font-color: #000000;
-  }
-  .theme-dark {
-    --color-primary: #457b98;
-    --color-secondary: #243133;
-    --color-accent: #12cdea;
-    --font-color: #ffffff;
-  }
-  .container {
-    width: 100%;
-    height: 100%;
-    background: var(--color-secondary);
-  }
-  .container h1 {
-    color: var(--font-color);
-  }
-  .button {
-    color: var(--font-color);
-    background: var(--color-primary);
-    padding: 0.25rem;
-    border: 0;
-    border-radius: 5px;
-  }
-  .btn-style {
-    padding: 0.25rem;
-    border: 0;
-    border-radius: 5px;
+  .rounded {
+    border-radius: 0.5rem;
   }
 </style>
 {{ end }}
@@ -75,24 +42,29 @@
   // function to set a given theme/color-scheme
   function setTheme(themeName) {
     localStorage.setItem('theme', themeName)
-    document.documentElement.className = themeName
+    document.documentElement.setAttribute('data-bs-theme', themeName)
   }
 
   // function to toggle between light and dark theme
   function toggleTheme() {
-    if (localStorage.getItem('theme') === 'theme-dark') {
-      setTheme('theme-light')
+    if (localStorage.getItem('theme') === 'dark') {
+      setTheme('light')
     } else {
-      setTheme('theme-dark')
+      setTheme('dark')
     }
   }
 
   // Immediately invoked function to set the theme on initial load
   ;(function () {
-    if (localStorage.getItem('theme') === 'theme-dark') {
-      setTheme('theme-dark')
+    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      setTheme('dark')
     } else {
-      setTheme('theme-light')
+      setTheme('light')
+    }
+    if (localStorage.getItem('theme') === 'dark') {
+      setTheme('dark')
+    } else {
+      setTheme('light')
     }
   })()
 </script>
@@ -101,14 +73,17 @@
 <!-- -->
 
 {{ define "header" }}
-<header style="height: 2.5rem; background-color: var(--color-primary)">
-  <button
-    type="button"
-    onclick="toggleTheme()"
-    style="color: var(--font-color); background: var(--color-secondary)"
-    class="btn-style"
-  >
-    Toggle Theme
-  </button>
+<header style="background-color: rgb(33 41 54)" class="navbar rounded">
+  <div class="container-fluid">
+    <h1 style="color: white; font-size: 1.5rem">NCCUCS - Past paper web</h1>
+    <button
+      type="button"
+      onclick="toggleTheme()"
+      style="color: black; background: white"
+      class="btn"
+    >
+      Toggle Theme
+    </button>
+  </div>
 </header>
 {{ end }}

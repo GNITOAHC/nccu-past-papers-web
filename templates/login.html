@@ -1,10 +1,24 @@
 {{ define "body" }}
-<div>
+<div style="padding-left: 6rem; padding-right: 6rem; padding-top: 6rem">
   <h1>Login</h1>
 
-  <form method="post" action="" class="h-20" enctype="multipart/form-data">
-    <input type="text" name="email" placeholder="example@example.com" />
-    <button type="submit">Login</button>
+  <form
+    method="post"
+    action=""
+    class="input-group"
+    style="width: 20rem"
+    enctype="multipart/form-data"
+  >
+    <input
+      type="text"
+      name="email"
+      placeholder="example@example.com"
+      class="form-control"
+      aria-describedby="button-addon"
+    />
+    <button type="submit" class="btn btn-secondary" id="button-addon">
+      Login
+    </button>
   </form>
 </div>
 {{ end }}
