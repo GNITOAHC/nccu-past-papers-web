@@ -53,7 +53,7 @@ func NewApp() *App {
 func (a *App) Routes() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", a.Login)
-	mux.HandleFunc("/content/", a.loginProtect(a.HandleContent))
+	mux.HandleFunc("/content/", a.loginProtect(a.ContentHandler))
 	return mux
 }
 
