@@ -18,6 +18,12 @@
     integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
     crossorigin="anonymous"
   />
+  <script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+    crossorigin="anonymous"
+  ></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
   <title>{{ .Title }}</title>
 </head>
 {{ end }}
@@ -39,33 +45,18 @@
 
 {{ define "themescript" }}
 <script>
-  // function to set a given theme/color-scheme
+  // function to set a given theme/color-scheme (light, dark, or system)
   function setTheme(themeName) {
+    if (themeName === 'system')
+      themeName = window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'dark'
+        : 'light'
     localStorage.setItem('theme', themeName)
     document.documentElement.setAttribute('data-bs-theme', themeName)
   }
-
-  // function to toggle between light and dark theme
-  function toggleTheme() {
-    if (localStorage.getItem('theme') === 'dark') {
-      setTheme('light')
-    } else {
-      setTheme('dark')
-    }
-  }
-
   // Immediately invoked function to set the theme on initial load
   ;(function () {
-    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      setTheme('dark')
-    } else {
-      setTheme('light')
-    }
-    if (localStorage.getItem('theme') === 'dark') {
-      setTheme('dark')
-    } else {
-      setTheme('light')
-    }
+    setTheme(localStorage.getItem('theme') || 'system')
   })()
 </script>
 {{ end }}
@@ -75,15 +66,92 @@
 {{ define "header" }}
 <header style="background-color: rgb(33 41 54)" class="navbar rounded">
   <div class="container-fluid">
-    <h1 style="color: white; font-size: 1.5rem">NCCUCS - Past paper web</h1>
-    <button
-      type="button"
-      onclick="toggleTheme()"
-      style="color: black; background: white"
-      class="btn"
-    >
-      Toggle Theme
-    </button>
+    <h1 style="color: white" class="header-h1">NCCUCS - Past paper web</h1>
+    <style>
+      .header-h1 {
+        font-size: 1.5rem;
+      }
+      @media screen and (max-width: 640px) {
+        .header-h1 {
+          font-size: 1rem;
+        }
+      }
+    </style>
+    <div style="display: flex; flex-direction: row; column-gap: 0.7rem">
+      {{ template "dropdown-button" }}
+      <a
+        style="color: black; background: white"
+        class="btn header-btn"
+        href="https://github.com/gnitoahc/nccu-past-papers-web"
+        ><i data-lucide="github"></i
+      ></a>
+      <script>
+        lucide.createIcons()
+      </script>
+    </div>
+    <style>
+      .header-btn {
+        --bs-btn-padding-x: 0.5rem;
+        --bs-btn-padding-y: 0.25rem;
+      }
+    </style>
   </div>
+  <script>
+    function getSvgIcon(theme) {
+      if (theme == 'dark') return `<i data-lucide="moon"></i>`
+      else if (theme == 'light') return `<i data-lucide="sun"></i>`
+      else {
+        return window.matchMedia('(prefers-color-scheme: dark)').matches
+          ? `<i data-lucide="moon"></i>`
+          : `<i data-lucide="sun"></i>`
+      }
+    }
+    for (const button of document.querySelectorAll('.theme-toggle')) {
+      button.addEventListener('click', (event) => {
+        setTheme(event.target.value)
+        document.getElementById('dropdownMenuButton').innerHTML = getSvgIcon(
+          event.target.value
+        )
+        lucide.createIcons()
+      })
+    }
+    ;(function () {
+      document.getElementById('dropdownMenuButton').innerHTML = getSvgIcon(
+        localStorage.getItem('theme') || 'system'
+      )
+      lucide.createIcons()
+    })()
+  </script>
 </header>
+{{ end }}
+
+<!-- -->
+
+{{ define "dropdown-button"}}
+<div class="dropdown">
+  <button
+    id="dropdownMenuButton"
+    class="btn header-btn"
+    type="button"
+    data-bs-toggle="dropdown"
+    aria-expanded="false"
+    style="color: black; background: white"
+  ></button>
+  <ul class="dropdown-menu header-dropdown-menu">
+    <li>
+      <button class="dropdown-item theme-toggle" value="light">Light</button>
+    </li>
+    <li>
+      <button class="dropdown-item theme-toggle" value="dark">Dark</button>
+    </li>
+    <li>
+      <button class="dropdown-item theme-toggle" value="system">System</button>
+    </li>
+  </ul>
+  <style>
+    .header-dropdown-menu {
+      --bs-dropdown-min-width: 1rem;
+    }
+  </style>
+</div>
 {{ end }}
