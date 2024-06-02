@@ -1,0 +1,44 @@
+{
+    "sha": "sha-xxxx",
+    "url": "https://api.github.com/repos/GNITOAHC/nccu-past-papers-web/git/trees/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "tree": [
+        {
+            "path": "CONTRIBUTING.md",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "sha1",
+            "size": 766,
+            "url": "url1"
+        },
+        {
+            "path": "ComputerScience",
+            "mode": "040000",
+            "type": "tree",
+            "sha": "sha2",
+            "url": "url2"
+        },
+        {
+            "path": "ComputerScience/Algo",
+            "mode": "040000",
+            "type": "tree",
+            "sha": "sha3",
+            "url": "url3"
+        },
+        {
+            "path": "ComputerScience/Algo/111_2_Mid.pdf",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "sha5",
+            "size": 128044,
+            "url": "url4"
+        },
+        {
+            "path": "ComputerScience/Algo/Algorithm_HW1.pdf",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "sha5",
+            "size": 143944,
+            "url": "url5"
+        }
+    ]
+}
