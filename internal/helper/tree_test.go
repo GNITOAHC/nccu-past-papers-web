@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -31,13 +32,18 @@ func TestTreeParse(t *testing.T) {
 	// }
 
 	root := ParseTree(data)
-	printTree(root)
+	printTree(root, 0)
 	t.Log(root.Name)
 }
 
-func printTree(t *TreeNode) {
-	log.Println(t.Name, t.Path)
+func printTree(t *TreeNode, depth int) {
+	isDir := t.IsDir
+	if isDir {
+		log.Println(strings.Repeat("  ", depth), t.Name+"/")
+	} else {
+		log.Println(strings.Repeat("  ", depth), t.Name, t.Size)
+	}
 	for _, c := range t.Children {
-		printTree(c)
+		printTree(c, depth+1)
 	}
 }

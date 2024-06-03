@@ -8,7 +8,9 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
+	"past-papers-web/internal/cache"
 	"past-papers-web/internal/config"
 )
 
@@ -17,19 +19,25 @@ type Helper struct {
 	repoAPI           string
 	authorization     string
 	gasAPI            string
+	structureCache    *cache.Cache[string, map[string]interface{}]
 }
 
 func NewHelper(config *config.Config) *Helper {
+	structureCache := cache.New[string, map[string]interface{}]()
 	return &Helper{
 		githubAccessToken: config.GitHubAccessToken,
 		repoAPI:           config.RepoAPI,
 		authorization:     "Bearer " + config.GitHubAccessToken,
 		gasAPI:            config.GASAPI,
+		structureCache:    structureCache,
 	}
 }
 
 // Repo structucture
 func (h *Helper) GetStructure() map[string]interface{} {
+	if val, ok := h.structureCache.Get("structure"); ok {
+		return val
+	}
 	// Create HTTP request
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", h.repoAPI+"git/trees/main?recursive=1", nil)
@@ -49,6 +57,7 @@ func (h *Helper) GetStructure() map[string]interface{} {
 	json.Unmarshal([]byte(body), &data)
 
 	// fmt.Println(data)
+	h.structureCache.Set("structure", data, 7*24*time.Hour) // Cache for 7 days
 
 	return data
 }
