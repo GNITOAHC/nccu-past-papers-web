@@ -36,6 +36,23 @@ func TestTreeParse(t *testing.T) {
 	t.Log(root.Name)
 }
 
+func TestGetChildren(t *testing.T) {
+	jsonFile, err := os.Open("./tree_test.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer jsonFile.Close()
+	body, err := io.ReadAll(jsonFile)
+	var data map[string]interface{}
+	json.Unmarshal([]byte(body), &data)
+	root := ParseTree(data)
+	node, err := GetChildren(root, "ComputerScience/")
+	if err != nil {
+		t.Fatal(err)
+	}
+	printTree(node, 0)
+}
+
 func printTree(t *TreeNode, depth int) {
 	isDir := t.IsDir
 	if isDir {

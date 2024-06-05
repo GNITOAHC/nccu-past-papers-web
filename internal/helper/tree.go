@@ -2,6 +2,7 @@ package helper
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"strings"
 )
@@ -21,6 +22,30 @@ type githubEntry struct {
 	Sha  string `json:"sha"`
 	Size *int   `json:"size,omitempty"` // pointer to an integer
 	Url  string `json:"url"`
+}
+
+func (t *TreeNode) GetChildren(path string) (*TreeNode, error) {
+	if path == "" {
+		return t, nil
+	}
+	return GetChildren(t, path)
+}
+
+func GetChildren(root *TreeNode, path string) (*TreeNode, error) {
+	if path == "" {
+		return root, nil
+	}
+	path = strings.TrimPrefix(path, "/")
+	path = strings.TrimSuffix(path, "/")
+	paths := strings.Split(path, "/")
+	current := root
+	for _, p := range paths {
+		if _, exists := current.Children[p]; !exists {
+			return nil, errors.New("Path not found")
+		}
+		current = current.Children[p]
+	}
+	return current, nil
 }
 
 func (t *TreeNode) AddPath(path []string, index int, entry githubEntry) {
