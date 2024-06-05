@@ -130,21 +130,18 @@ func (a *App) tmplExecute(w http.ResponseWriter, data map[string]interface{}) {
 }
 
 func (a *App) GetHomeContent(w http.ResponseWriter, r *http.Request) {
-	res := a.helper.GetStructure()
 	items := make([]contentItem, 0)
 
-	for _, v := range res["tree"].([]interface{}) {
-		if treeItem, ok := v.(map[string]interface{}); ok {
-			if path, ok := treeItem["path"].(string); ok {
-				if len(strings.Split(path, "/")) == 1 {
-					items = append(items, contentItem{
-						Link:   path,
-						Name:   path,
-						IsTree: treeItem["type"].(string) == "tree",
-					})
-				}
-			}
-		}
+	treeNode, err := a.helper.TreeNode.GetChildren("")
+	if err != nil {
+		fmt.Println("Error getting children", err)
+	}
+	for _, v := range treeNode.Children {
+		items = append(items, contentItem{
+			Link:   "/content" + v.Path, // Absolute path (starts with /content)
+			Name:   v.Name,
+			IsTree: v.IsDir,
+		})
 	}
 
 	a.tmplExecute(w, map[string]interface{}{
@@ -155,22 +152,18 @@ func (a *App) GetHomeContent(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) GetContent(w http.ResponseWriter, r *http.Request, urlpath string) {
-	res := a.helper.GetStructure()
 	items := make([]contentItem, 0)
 
-	for _, v := range res["tree"].([]interface{}) {
-		if treeItem, ok := v.(map[string]interface{}); ok {
-			if path, ok := treeItem["path"].(string); ok {
-				if strings.HasPrefix(path, urlpath) && len(strings.Split(path, "/")) == len(strings.Split(urlpath, "/"))+1 {
-					lnk := strings.Split(urlpath, "/")[len(strings.Split(urlpath, "/"))-1] + "/" + strings.Split(path, "/")[len(strings.Split(urlpath, "/"))]
-					items = append(items, contentItem{
-						Link:   lnk,
-						Name:   lnk,
-						IsTree: treeItem["type"].(string) == "tree",
-					})
-				}
-			}
-		}
+	treeNode, err := a.helper.TreeNode.GetChildren(urlpath)
+	if err != nil {
+		fmt.Println("Error getting children", err)
+	}
+	for _, v := range treeNode.Children {
+		items = append(items, contentItem{
+			Link:   "/content" + v.Path, // Absolute path (starts with /content)
+			Name:   v.Name,
+			IsTree: v.IsDir,
+		})
 	}
 
 	a.tmplExecute(w, map[string]interface{}{

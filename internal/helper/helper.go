@@ -8,9 +8,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"time"
 
-	"past-papers-web/internal/cache"
 	"past-papers-web/internal/config"
 )
 
@@ -19,45 +17,43 @@ type Helper struct {
 	repoAPI           string
 	authorization     string
 	gasAPI            string
-	structureCache    *cache.Cache[string, map[string]interface{}]
+	TreeNode          *TreeNode
 }
 
 func NewHelper(config *config.Config) *Helper {
-	structureCache := cache.New[string, map[string]interface{}]()
+	treeNode := ParseTree(InitTree(config))
 	return &Helper{
 		githubAccessToken: config.GitHubAccessToken,
 		repoAPI:           config.RepoAPI,
 		authorization:     "Bearer " + config.GitHubAccessToken,
 		gasAPI:            config.GASAPI,
-		structureCache:    structureCache,
+		TreeNode:          treeNode,
 	}
 }
 
-// Repo structucture
-func (h *Helper) GetStructure() map[string]interface{} {
-	if val, ok := h.structureCache.Get("structure"); ok {
-		return val
-	}
-	// Create HTTP request
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", h.repoAPI+"git/trees/main?recursive=1", nil)
+// Refresh the tree node by fetching the latest data from the GitHub API
+func RefreshTree(config *config.Config, h *Helper) {
+	h.TreeNode = ParseTree(InitTree(config))
+	return
+}
+
+// Initialize the tree node
+func InitTree(config *config.Config) map[string]interface{} {
+	client := &http.Client{} // Create HTTP request
+	req, err := http.NewRequest("GET", config.RepoAPI+"git/trees/main?recursive=1", nil)
 	if err != nil {
 		log.Fatalf("Error creating request: %v", err)
 	}
-	req.Header.Set("Authorization", h.authorization)
+	req.Header.Set("Authorization", "Bearer "+config.GitHubAccessToken)
 	res, err := client.Do(req)
 	if err != nil {
 		log.Fatalf("Error sending request: %v", err)
 	}
 
 	body, err := io.ReadAll(res.Body)
-	// fmt.Println(string(body))
 
 	var data map[string]interface{}
 	json.Unmarshal([]byte(body), &data)
-
-	// fmt.Println(data)
-	h.structureCache.Set("structure", data, 7*24*time.Hour) // Cache for 7 days
 
 	return data
 }

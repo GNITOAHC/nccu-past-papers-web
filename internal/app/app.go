@@ -112,36 +112,3 @@ func (a *App) loginProtect(next http.HandlerFunc) http.HandlerFunc {
 		return
 	})
 }
-
-func (a *App) GetStructure(w http.ResponseWriter, r *http.Request) {
-	res := a.helper.GetStructure()
-	tmpl := template.Must(template.ParseFiles("templates/tree.html"))
-
-	type TmplTree struct {
-		Path string
-		Name string
-	}
-	tmplTree := make([]TmplTree, 0)
-
-	if tree, ok := res["tree"].([]interface{}); ok {
-		for _, item := range tree {
-			if treeItem, ok := item.(map[string]interface{}); ok {
-				if path, ok := treeItem["path"].(string); ok && treeItem["type"].(string) == "tree" {
-					// fmt.Println("Path:", path)
-					tmplTree = append(tmplTree, TmplTree{Path: "content/" + path, Name: path})
-				}
-			}
-		}
-	}
-
-	content := map[string]interface{}{
-		"Tree":  tmplTree,
-		"Title": "Tree",
-	}
-	err := tmpl.Execute(w, content)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-
-	return
-}
