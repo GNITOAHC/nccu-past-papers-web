@@ -53,8 +53,8 @@ func load(path string) error {
 }
 
 func parse(line string) (string, string, error) {
-	s := strings.TrimSpace(line)   // Trim the line
-	if strings.HasPrefix(s, "#") { // Check if the line is a comment
+	s := strings.TrimSpace(line)              // Trim the line
+	if strings.HasPrefix(s, "#") || s == "" { // Check if the line is a comment or empty
 		return "", "", nil
 	}
 	if !strings.Contains(s, "=") { // Check if the line is a key value pair
