@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"past-papers-web/internal/config"
 )
@@ -117,7 +118,7 @@ func (h *Helper) Upload(uploadData *UploadData, path string) error {
 		`"branch": "` + uploadData.Branch + `", ` +
 		`"sha": "` + uploadData.Sha + `"}`)
 
-	req, err := http.NewRequest("PUT", h.repoAPI+"contents/"+path, bytes.NewBuffer(jsonStr))
+	req, err := http.NewRequest("PUT", h.repoAPI+"contents/"+strings.TrimPrefix(path, "/"), bytes.NewBuffer(jsonStr))
 	req.Header.Set("Authorization", h.authorization)
 	req.Header.Set("Accept", "application/vnd.github+json")
 	if err != nil {
