@@ -17,38 +17,43 @@ type Helper struct {
 	repoAPI           string
 	authorization     string
 	gasAPI            string
+	TreeNode          *TreeNode
 }
 
 func NewHelper(config *config.Config) *Helper {
+	treeNode := ParseTree(InitTree(config))
 	return &Helper{
 		githubAccessToken: config.GitHubAccessToken,
 		repoAPI:           config.RepoAPI,
 		authorization:     "Bearer " + config.GitHubAccessToken,
 		gasAPI:            config.GASAPI,
+		TreeNode:          treeNode,
 	}
 }
 
-// Repo structucture
-func (h *Helper) GetStructure() map[string]interface{} {
-	// Create HTTP request
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", h.repoAPI+"git/trees/main?recursive=1", nil)
+// Refresh the tree node by fetching the latest data from the GitHub API
+func RefreshTree(config *config.Config, h *Helper) {
+	h.TreeNode = ParseTree(InitTree(config))
+	return
+}
+
+// Initialize the tree node
+func InitTree(config *config.Config) map[string]interface{} {
+	client := &http.Client{} // Create HTTP request
+	req, err := http.NewRequest("GET", config.RepoAPI+"git/trees/main?recursive=1", nil)
 	if err != nil {
 		log.Fatalf("Error creating request: %v", err)
 	}
-	req.Header.Set("Authorization", h.authorization)
+	req.Header.Set("Authorization", "Bearer "+config.GitHubAccessToken)
 	res, err := client.Do(req)
 	if err != nil {
 		log.Fatalf("Error sending request: %v", err)
 	}
 
 	body, err := io.ReadAll(res.Body)
-	// fmt.Println(string(body))
 
 	var data map[string]interface{}
 	json.Unmarshal([]byte(body), &data)
-
-	// fmt.Println(data)
 
 	return data
 }
