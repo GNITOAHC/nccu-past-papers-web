@@ -3,15 +3,14 @@ package helper
 import (
 	b64 "encoding/base64"
 	"os"
-	"past-papers-web/internal/config"
 	"testing"
 
-	"github.com/joho/godotenv"
+	"past-papers-web/dotenv"
+	"past-papers-web/internal/config"
 )
 
 func TestUploadCombos(t *testing.T) {
-
-	err := godotenv.Load()
+	err := dotenv.Load("./.env") // Load .env under same directory
 	if err != nil {
 		t.Log("Error loading .env file")
 	}

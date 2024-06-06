@@ -1,0 +1,5 @@
+DOTENV_TEST=testenv
+DOTENV_TEST_WITH_QUOTE="testenv_withquote"
+DOTENV_TEST_WITH_SPACE = "testenv_withspace"
+VAR = var_here
+DOTENV_TEST_WITH_VAR = test_withvar_${VAR}

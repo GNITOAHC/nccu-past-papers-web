@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/joho/godotenv"
+	"past-papers-web/dotenv"
 )
 
 type Config struct {
@@ -14,7 +14,7 @@ type Config struct {
 }
 
 func NewConfig() *Config {
-	err := godotenv.Load()
+	err := dotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
