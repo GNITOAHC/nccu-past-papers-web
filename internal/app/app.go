@@ -3,7 +3,6 @@ package app
 import (
 	"flag"
 	"fmt"
-	"html/template"
 	"log"
 	"net"
 	"net/http"
@@ -53,45 +52,12 @@ func NewApp() *App {
 func (a *App) Routes() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", a.Login)
+	mux.HandleFunc("/register", a.Register)
 	mux.HandleFunc("/content/", a.loginProtect(a.ContentHandler))
 	return mux
 }
 
-func (a *App) Login(w http.ResponseWriter, r *http.Request) {
-	renderTmpl := func() {
-		tmpl := template.Must(template.ParseFiles("templates/base.html", "templates/login.html"))
-		err := tmpl.Execute(w, nil)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-	}
-	if r.Method == "POST" {
-		email := r.FormValue("email")
-		http.SetCookie(w, &http.Cookie{ // Set a cookie
-			Name:     "email",
-			Value:    email,
-			MaxAge:   3600,
-			Path:     "/",
-			SameSite: http.SameSiteLaxMode,
-		})
-
-		if _, ok := a.usercache.Get(email); ok { // Has user in cache
-			http.Redirect(w, r, "/content", http.StatusSeeOther)
-			return
-		}
-		if a.helper.CheckUser(email) { // Has user in DB
-			a.usercache.Set(email, true, time.Duration(time.Hour*720)) // Set cache for 30 days
-			http.Redirect(w, r, "/content", http.StatusSeeOther)
-			return
-		}
-
-		renderTmpl()
-		return
-	}
-	renderTmpl()
-	return
-}
-
+// Auth middleware
 func (a *App) loginProtect(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie("email")
