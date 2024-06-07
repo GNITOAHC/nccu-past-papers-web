@@ -8,7 +8,22 @@ import (
 
 func (a *App) Register(w http.ResponseWriter, r *http.Request) {
 	// Register user
-	// TODO: Implement user registration
+	email := r.FormValue("email")
+	name := r.FormValue("name")
+	studentId := r.FormValue("studentId")
+	for _, v := range []string{email, name, studentId} {
+		if v == "" {
+			http.Error(w, "Missing required fields", http.StatusBadRequest)
+			return
+		}
+	}
+	success := a.helper.RegisterUser(email, name, studentId)
+	if !success {
+		http.Error(w, "Failed to register user", http.StatusInternalServerError)
+		return
+	}
+	w.Write([]byte("Success, please wait for approval"))
+	return
 }
 
 func (a *App) Login(w http.ResponseWriter, r *http.Request) {
