@@ -1,61 +1,54 @@
-// Function to add a new record to the sheet
-function addRecord(sheetName, record) {
+// Function to get sheet
+function getSheet(sheetName) {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
   if (!sheet) {
     sheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet(sheetName);
   }
+  return sheet;
+}
+
+// Function to get column index by given column
+function getColumnIndex(sheet, column) {
+  var data = sheet.getDataRange().getValues();
+  for (var i = 0; i < data.length; i++) {
+    if (data[0][i] == column) return i;
+  }
+}
+
+// Function to get row on sheet (which is added by 1)
+function getRow(sheet, column, value) {
+  var col = getColumnIndex(sheet, column);
+  var data = sheet.getDataRange().getValues();
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][col] == value) return i + 1;
+  }
+  return -1;
+}
+
+// Function to add a new record to the sheet
+function addRecord(sheetName, record) {
+  var sheet = getSheet(sheetName);
   sheet.appendRow(record);
 }
 
-// Function to read records from the sheet
-function readRecords(sheetName) {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
-  if (!sheet) {
-    Logger.log('Sheet not found');
-    return [];
-  }
-  var data = sheet.getDataRange().getValues();
-  return data;
-}
-
-// Function to update a record in the sheet
-function updateRecord(sheetName, rowNum, colNum, newValue) {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
-  if (!sheet) {
-    Logger.log('Sheet not found');
-    return;
-  }
-  sheet.getRange(rowNum, colNum).setValue(newValue);
-}
-
 // Function to delete a record from the sheet
-function deleteRecord(sheetName, rowNum) {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
-  if (!sheet) {
-    Logger.log('Sheet not found');
-    return;
-  }
+function deleteRecord(sheetName, columnName, rowValue) {
+  var sheet = getSheet(sheetName);
+  var rowNum = getRow(sheet, columnName, rowValue);
   sheet.deleteRow(rowNum);
 }
 
 // Function to search records in the sheet
 function searchRecords(sheetName, searchColumn, searchValue) {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
-  if (!sheet) {
-    Logger.log('Sheet not found');
-    return [];
-  }
+  var sheet = getSheet(sheetName);
   var data = sheet.getDataRange().getValues();
   var results = [];
   
   // Determine the column index based on the search column name
-  var columnIndex = -1;
-  if (searchColumn === 'email') {
-    columnIndex = 0;
-  } else if (searchColumn === 'name') {
-    columnIndex = 1;
-  } else if (searchColumn === 'studentId') {
-    columnIndex = 2;
+  var columnIndex = getColumnIndex(sheet, searchColumn);
+  if (columnIndex == -1) {
+    Logger.log('Sheetname: %s with searchColumn: %s not found', sheetName, searchColumn)
+    return []
   }
   
   // Iterate through data to find matching records
@@ -73,9 +66,7 @@ function doGet(e) {
   var action = e.parameter.action;
   var response;
   
-  if (action === 'read') {
-    response = readRecords(sheetName);
-  } else if (action === 'search') {
+  if (action === 'search') {
     var searchColumn = e.parameter.searchColumn;
     var searchValue = e.parameter.searchValue;
     response = searchRecords(sheetName, searchColumn, searchValue);
@@ -96,14 +87,9 @@ function doPost(e) {
   if (action === 'add') {
     addRecord(sheetName, params.record);
     response = { success: true };
-  } else if (action === 'update') {
-    updateRecord(sheetName, params.rowNum, params.colNum, params.newValue);
-    response = { success: true };
   } else if (action === 'delete') {
-    deleteRecord(sheetName, params.rowNum);
+    deleteRecord(sheetName, params.columnName, params.rowValue);
     response = { success: true };
-  } else if (action === 'search') {
-    response = searchRecords(sheetName, params.searchColumn, params.searchValue);
   } else {
     response = { error: 'Invalid action' };
   }
