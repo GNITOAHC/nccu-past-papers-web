@@ -23,7 +23,7 @@ func (a *App) Register(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to register user", http.StatusInternalServerError)
 		return
 	}
-	w.Write([]byte("Success, please wait for approval")) // Write to response first
+	w.Write([]byte("Success, please check your email and wait for approval.")) // Write to response first
 	t, err := template.ParseFiles("templates/mail/register.html")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
