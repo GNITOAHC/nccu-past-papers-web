@@ -14,8 +14,8 @@ type Mail struct {
 	port string
 }
 
-func New(from string, pass string) *Mail {
-	return &Mail{from: from, pass: pass, host: "smtp.gmail.com", port: "587"}
+func New(from, pass, host, port string) *Mail {
+	return &Mail{from: from, pass: pass, host: host, port: port}
 }
 
 func (m *Mail) Send(to, subject, content string) error {
