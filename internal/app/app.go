@@ -11,6 +11,7 @@ import (
 	"past-papers-web/internal/cache"
 	"past-papers-web/internal/config"
 	"past-papers-web/internal/helper"
+	"past-papers-web/internal/mail"
 )
 
 var (
@@ -21,6 +22,7 @@ type App struct {
 	helper    *helper.Helper
 	usercache *cache.Cache[string, interface{}]
 	filecache *cache.Cache[string, []byte]
+	mailer    *mail.Mail
 }
 
 func StartServer() {
@@ -42,10 +44,12 @@ func NewApp() *App {
 	config := config.NewConfig()
 	usercache := cache.New[string, interface{}]()
 	filecache := cache.New[string, []byte]()
+	mailer := mail.New(config.SMTPFrom, config.SMTPPass, config.SMTPHost, config.SMTPPort)
 	return &App{
 		helper:    helper.NewHelper(config),
 		usercache: usercache,
 		filecache: filecache,
+		mailer:    mailer,
 	}
 }
 

@@ -1,6 +1,7 @@
 package app
 
 import (
+	"bytes"
 	"html/template"
 	"net/http"
 	"time"
@@ -22,7 +23,19 @@ func (a *App) Register(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to register user", http.StatusInternalServerError)
 		return
 	}
-	w.Write([]byte("Success, please wait for approval"))
+	w.Write([]byte("Success, please check your email and wait for approval.")) // Write to response first
+	t, err := template.ParseFiles("templates/mail/register.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	buf := new(bytes.Buffer)
+	data := map[string]interface{}{"Name": name}
+	if err = t.Execute(buf, data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	a.mailer.Send(email, "Registration", buf.String())
 	return
 }
 
