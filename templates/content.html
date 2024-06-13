@@ -9,9 +9,44 @@
   {{ end }} {{ end }}
 </ul>
 
-<form method="post" action="" class="h-20" enctype="multipart/form-data">
+<form id="upload-form" class="h-20" enctype="multipart/form-data">
   <input type="text" name="name" placeholder="Name" />
   <input type="file" name="file" placeholder="File Input" />
   <button type="submit">Add</button>
 </form>
+{{ template "upload-script" }} {{ template "upload-modal" }}
+<!-- -->
+{{ end }}
+
+<!-- -->
+
+{{ define "upload-script" }}
+<script>
+  const uploadForm = document.getElementById('upload-form')
+  uploadForm.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    const uploadM = new bootstrap.Modal(document.getElementById('upload-modal'))
+    uploadM.show()
+    document.getElementById('upload-modal-body').innerHTML = 'Loading...'
+    const formData = new FormData(uploadForm)
+    const res = await fetch(window.location.href, {
+      method: 'POST',
+      body: formData,
+    })
+    const message = await res.text()
+    document.getElementById('upload-modal-body').innerHTML = message
+  })
+</script>
+{{ end }}
+
+<!-- -->
+
+{{ define "upload-modal" }}
+<div class="modal fade" id="upload-modal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered" id="upload-modal-dialog">
+    <div class="modal-content">
+      <div class="modal-body" id="upload-modal-body"></div>
+    </div>
+  </div>
+</div>
 {{ end }}

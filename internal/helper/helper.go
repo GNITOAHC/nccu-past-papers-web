@@ -77,6 +77,7 @@ func (h *Helper) GetSHA(apiPrefix string) string {
 }
 
 func (h *Helper) CreateBranch(branch string) (string, error) {
+    // https://docs.github.com/en/rest/git/refs?apiVersion=2022-11-28#create-a-reference
 	branchAPI := h.repoAPI + "git/refs"
 	sha := h.GetSHA(branchAPI)
 	client := &http.Client{}

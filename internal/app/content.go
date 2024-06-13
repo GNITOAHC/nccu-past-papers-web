@@ -2,14 +2,13 @@ package app
 
 import (
 	"bytes"
+	"encoding/base64"
 	"fmt"
 	"html/template"
 	"io"
 	"net/http"
 	"strings"
 	"time"
-
-	"encoding/base64"
 
 	"past-papers-web/internal/helper"
 )
@@ -56,44 +55,51 @@ func (a *App) uploadFile(w http.ResponseWriter, r *http.Request) {
 	name := r.PostFormValue("name")
 	file, header, err := r.FormFile("file")
 	if err != nil {
-		fmt.Println("Error getting file", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		http.Error(w, "Error getting file: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	buf := bytes.NewBuffer(nil)
 	if _, err := io.Copy(buf, file); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		http.Error(w, "Error copying file: "+err.Error(), http.StatusInternalServerError)
+		return
 	}
 	dst := make([]byte, base64.StdEncoding.EncodedLen(len(buf.Bytes())))
 	base64.StdEncoding.Strict().Encode(dst, buf.Bytes())
 
 	newBranchName := "upload-from-" + name
-	newBranchSha, err := a.helper.CreateBranch(newBranchName)
+	prefix := len("upload-from-" + name)
+	var newBranchSha string
+	for i := 0; i < 10; i++ {
+		newBranchSha, err = a.helper.CreateBranch(newBranchName)
+		if err == nil {
+			break
+		}
+		newBranchName = newBranchName[:prefix] + "-" + fmt.Sprint(i)
+	}
 	if err != nil {
-		fmt.Println("Error creating branch", err)
+		http.Error(w, "Error creating branch: "+err.Error(), http.StatusInternalServerError)
 	}
 
 	uploadData := helper.UploadData{
-		Message: "Upload from " + name,
+		Message: "Upload by " + name,
 		Content: string(dst),
 		Branch:  newBranchName,
 		Sha:     newBranchSha,
 	}
 	err = a.helper.Upload(&uploadData, r.URL.Path[len("/content/"):]+"/"+header.Filename)
 	if err != nil {
-		fmt.Println("Error uploading file", err)
+		http.Error(w, "Error uploading file: "+err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	err = a.helper.CreatePR(newBranchName)
 	if err != nil {
-		fmt.Println("Error creating PR", err)
+		w.Write([]byte("Error creating PR " + err.Error()))
+		return
 	}
 
-	tmpl := template.Must(template.ParseFiles("templates/success.html"))
-	tmpl.Execute(w, map[string]interface{}{
-		"Redirect": r.URL.Path[len("/content/"):],
-	})
+	w.Write([]byte("File Uploaded"))
 	return
 }
 
