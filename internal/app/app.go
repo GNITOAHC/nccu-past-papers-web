@@ -56,9 +56,20 @@ func NewApp() *App {
 func (a *App) Routes() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", a.Login)
+	a.RegisterAdminRoutes("/admin", mux)
+	mux.HandleFunc("/refresh-tree", a.RefreshTree)
 	mux.HandleFunc("/register", a.Register)
 	mux.HandleFunc("/content/", a.loginProtect(a.ContentHandler))
 	return mux
+}
+
+func (a *App) RefreshTree(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+	helper.RefreshTree(config.NewConfig(), a.helper)
+	w.WriteHeader(http.StatusOK)
+	return
 }
 
 // Auth middleware
