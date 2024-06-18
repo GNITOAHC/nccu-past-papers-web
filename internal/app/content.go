@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
-	"html/template"
 	"io"
 	"net/http"
 	"strings"
@@ -127,14 +126,6 @@ func (a *App) handleFile(w http.ResponseWriter, contentType string, urlpath stri
 	return
 }
 
-func (a *App) tmplExecute(w http.ResponseWriter, data map[string]interface{}) {
-	tmpl := template.Must(template.ParseFiles("templates/base.html", "templates/content.html"))
-	err := tmpl.Execute(w, data)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-}
-
 func (a *App) GetHomeContent(w http.ResponseWriter, r *http.Request) {
 	items := make([]contentItem, 0)
 
@@ -150,7 +141,7 @@ func (a *App) GetHomeContent(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	a.tmplExecute(w, map[string]interface{}{
+	a.tmplExecute(w, []string{"templates/content.html"}, map[string]interface{}{
 		"Title": "Path >>> HOME",
 		"Items": items,
 	})
@@ -172,7 +163,7 @@ func (a *App) GetContent(w http.ResponseWriter, r *http.Request, urlpath string)
 		})
 	}
 
-	a.tmplExecute(w, map[string]interface{}{
+	a.tmplExecute(w, []string{"templates/content.html"}, map[string]interface{}{
 		"Title": "Path >>> " + urlpath,
 		"Items": items,
 	})
