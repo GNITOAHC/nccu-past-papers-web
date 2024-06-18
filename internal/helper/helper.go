@@ -18,6 +18,7 @@ type Helper struct {
 	repoAPI           string
 	authorization     string
 	gasAPI            string
+	client            *http.Client
 	TreeNode          *TreeNode
 }
 
@@ -28,6 +29,7 @@ func NewHelper(config *config.Config) *Helper {
 		repoAPI:           config.RepoAPI,
 		authorization:     "Bearer " + config.GitHubAccessToken,
 		gasAPI:            config.GASAPI,
+		client:            &http.Client{},
 		TreeNode:          treeNode,
 	}
 }
@@ -77,7 +79,7 @@ func (h *Helper) GetSHA(apiPrefix string) string {
 }
 
 func (h *Helper) CreateBranch(branch string) (string, error) {
-    // https://docs.github.com/en/rest/git/refs?apiVersion=2022-11-28#create-a-reference
+	// https://docs.github.com/en/rest/git/refs?apiVersion=2022-11-28#create-a-reference
 	branchAPI := h.repoAPI + "git/refs"
 	sha := h.GetSHA(branchAPI)
 	client := &http.Client{}

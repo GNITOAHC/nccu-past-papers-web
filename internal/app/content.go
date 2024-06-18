@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sort"
 	"strings"
 	"time"
 
@@ -37,10 +38,6 @@ func (a *App) ContentHandler(w http.ResponseWriter, r *http.Request) {
 				a.handleFile(w, v, urlpath)
 				return
 			}
-		}
-		if urlpath == "" {
-			a.GetHomeContent(w, r) // Handle home page
-			return
 		}
 		a.GetContent(w, r, urlpath) // Else handle content page
 		return
@@ -126,28 +123,6 @@ func (a *App) handleFile(w http.ResponseWriter, contentType string, urlpath stri
 	return
 }
 
-func (a *App) GetHomeContent(w http.ResponseWriter, r *http.Request) {
-	items := make([]contentItem, 0)
-
-	treeNode, err := a.helper.TreeNode.GetChildren("")
-	if err != nil {
-		fmt.Println("Error getting children", err)
-	}
-	for _, v := range treeNode.Children {
-		items = append(items, contentItem{
-			Link:   "/content" + v.Path, // Absolute path (starts with /content)
-			Name:   v.Name,
-			IsTree: v.IsDir,
-		})
-	}
-
-	a.tmplExecute(w, []string{"templates/content.html"}, map[string]interface{}{
-		"Title": "Path >>> HOME",
-		"Items": items,
-	})
-	return
-}
-
 func (a *App) GetContent(w http.ResponseWriter, r *http.Request, urlpath string) {
 	items := make([]contentItem, 0)
 
@@ -155,7 +130,15 @@ func (a *App) GetContent(w http.ResponseWriter, r *http.Request, urlpath string)
 	if err != nil {
 		fmt.Println("Error getting children", err)
 	}
-	for _, v := range treeNode.Children {
+
+	keys := make([]string, 0, len(treeNode.Children)) // Sort keys
+	for k := range treeNode.Children {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	for _, k := range keys {
+		v := treeNode.Children[k]
 		items = append(items, contentItem{
 			Link:   "/content" + v.Path, // Absolute path (starts with /content)
 			Name:   v.Name,
@@ -163,8 +146,12 @@ func (a *App) GetContent(w http.ResponseWriter, r *http.Request, urlpath string)
 		})
 	}
 
+	showPath := urlpath
+	if urlpath == "" {
+		showPath = "HOME"
+	}
 	a.tmplExecute(w, []string{"templates/content.html"}, map[string]interface{}{
-		"Title": "Path >>> " + urlpath,
+		"Title": "Path >>> " + showPath,
 		"Items": items,
 	})
 	return

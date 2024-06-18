@@ -19,70 +19,71 @@ import (
  *     - All columns are string
  */
 
-func (h *Helper) CheckUser(mail string) bool {
+func (h *Helper) Request(method string, url string, body io.Reader) (*http.Response, error) {
+	req, err := http.NewRequest(method, url, body)
+	if err != nil {
+		log.Print(err)
+		return nil, err
+	}
+	res, err := h.client.Do(req)
+	if err != nil {
+		log.Print(err)
+		return nil, err
+	}
+	return res, nil
+}
+
+func (h *Helper) getOneUser(mail string) []string {
 	searchUrl := h.gasAPI + "?action=search&sheetName=past-papers-web-db&searchColumn=email&searchValue=" + mail
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", searchUrl, nil)
+	res, err := h.Request("GET", searchUrl, nil)
 	if err != nil {
-		log.Fatalf("Error creating request: %v", err)
+		log.Print(err)
+		return []string{}
 	}
-	res, err := client.Do(req)
-	if err != nil {
-		log.Fatalf("Error sending request: %v", err)
-	}
-
 	body, err := io.ReadAll(res.Body)
-
 	var data [][]string
 	json.Unmarshal([]byte(body), &data)
+	if len(data) == 0 {
+		return []string{}
+	}
+	return data[0]
+}
 
+func (h *Helper) CheckUser(mail string) bool {
+	data := h.getOneUser(mail)
 	if len(data) == 0 {
 		return false
 	}
-	if data[0][0] == mail {
+	if data[0] == mail {
 		return true
 	}
 	return false
 }
 
 func (h *Helper) GetWaitingList() [][]string {
-	searchUrl := h.gasAPI + "?action=readall&sheetName=waiting-list"
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", searchUrl, nil)
+	res, err := h.Request("GET", h.gasAPI+"?action=readall&sheetName=waiting-list", nil)
 	if err != nil {
-		log.Fatalf("Error creating request: %v", err)
+		log.Print(err)
+		return [][]string{}
 	}
-	res, err := client.Do(req)
-	if err != nil {
-		log.Fatalf("Error sending request: %v", err)
-	}
+
 	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		log.Print(err)
+		return [][]string{}
+	}
+
 	var data [][]string
 	json.Unmarshal([]byte(body), &data)
 	return data
 }
 
 func (h *Helper) IsAdmin(mail string) bool {
-	searchUrl := h.gasAPI + "?action=search&sheetName=past-papers-web-db&searchColumn=email&searchValue=" + mail
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", searchUrl, nil)
-	if err != nil {
-		log.Fatalf("Error creating request: %v", err)
-	}
-	res, err := client.Do(req)
-	if err != nil {
-		log.Fatalf("Error sending request: %v", err)
-	}
-
-	body, err := io.ReadAll(res.Body)
-
-	var data [][]string
-	json.Unmarshal([]byte(body), &data)
-
+	data := h.getOneUser(mail)
 	if len(data) == 0 {
 		return false
 	}
-	if data[0][0] == mail && data[0][5] == "true" {
+	if data[0] == mail && data[5] == "true" {
 		return true
 	}
 	return false
@@ -96,14 +97,10 @@ func (h *Helper) RegisterUser(mail string, name string, studentId string) bool {
         "action": "add",
         "record": ` + userInfo + `}`
 
-	client := &http.Client{} // Create HTTP client
-	req, err := http.NewRequest("POST", postUrl, strings.NewReader(reqBody))
+	res, err := h.Request("POST", postUrl, strings.NewReader(reqBody))
 	if err != nil {
-		log.Fatalf("Error creating request: %v", err)
-	}
-	res, err := client.Do(req)
-	if err != nil {
-		log.Fatalf("Error sending request: %v", err)
+		log.Print(err)
+		return false
 	}
 
 	if res.Status != "200 OK" {
