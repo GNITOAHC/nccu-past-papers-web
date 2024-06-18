@@ -1,0 +1,52 @@
+{{ define "body" }}
+<div>
+  <h1>Admin</h1>
+  <button type="button" class="btn btn-primary" id="refresh-btn">
+    Refresh Tree
+  </button>
+  <div class="container">
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col">Mail</th>
+          <th scope="col">Name</th>
+          <th scope="col">StudentId</th>
+          <th scope="col"></th>
+        </tr>
+      </thead>
+      <!-- prettier-ignore -->
+      <tbody>
+      {{ range .WaitingList }}
+        <tr>
+          {{ range . }} <td class="text-right">{{ . }}</td> {{ end }}
+          <td class="text-center py-1"><button type="button" class="btn btn-outline-primary btn-sm">Approve</button></td>
+        </tr>
+      {{ end }}
+    </tbody>
+    </table>
+  </div>
+  {{ template "WaitingList" }} {{ template "scripts" }}
+</div>
+{{ end }}
+
+<!-- -->
+
+{{ define "scripts"}}
+<script>
+  document.getElementById('refresh-btn').onclick = async function () {
+    window.alert('Refreshing tree...')
+    const response = await fetch('/refresh-tree', { method: 'POST' })
+    if (!response.ok) {
+      console.error('Failed to refresh tree')
+      window.alert('Failed to refresh tree')
+      return
+    }
+    window.alert('Tree refreshed')
+  }
+</script>
+{{ end }}
+
+<!-- -->
+{{ define "WaitingList"}}
+<div></div>
+{{ end }}
