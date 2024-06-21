@@ -1,6 +1,23 @@
 {{ define "body" }}
-<h1>{{ .Title }}</h1>
-<button type="button" onclick="javascript:history.back()">Back</button>
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb" id="content-breadcrumb"></ol>
+</nav>
+<script>
+  const path = '{{ .Path }}'
+  const pathArray = path.split('/')
+  console.log(pathArray)
+  const contentBreadcrumb = document.getElementById('content-breadcrumb')
+  pathArray.forEach((item, index) => {
+    const link = pathArray.slice(0, index + 1).join('/')
+    const li = document.createElement('li')
+    li.classList.add('breadcrumb-item')
+    li.insertAdjacentHTML('beforeend', `<a href="${'/' + link}">${item}</a>`)
+    contentBreadcrumb.append(li)
+  })
+  contentBreadcrumb.firstElementChild.innerHTML = `<a href="${'/content'}">HOME</a>`
+  contentBreadcrumb.lastElementChild.innerHTML =
+    pathArray.length === 1 ? 'HOME' : pathArray.slice(-1)
+</script>
 <ul>
   {{ range .Items }} {{ if .IsTree }}
   <li><a href="{{ .Link }}" class="underline">{{ .Name }}</a></li>

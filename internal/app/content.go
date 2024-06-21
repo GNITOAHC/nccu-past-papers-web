@@ -146,12 +146,11 @@ func (a *App) GetContent(w http.ResponseWriter, r *http.Request, urlpath string)
 		})
 	}
 
-	showPath := urlpath
-	if urlpath == "" {
-		showPath = "HOME"
+	if urlpath != "" {
+		urlpath = "/" + urlpath
 	}
 	a.tmplExecute(w, []string{"templates/content.html"}, map[string]interface{}{
-		"Title": "Path >>> " + showPath,
+		"Path":  "content" + urlpath,
 		"Items": items,
 	})
 	return
