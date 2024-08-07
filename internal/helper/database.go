@@ -19,7 +19,7 @@ import (
  *     - All columns are string
  */
 
-func (h *Helper) Request(method string, url string, body io.Reader) (*http.Response, error) {
+func (h *Helper) request(method string, url string, body io.Reader) (*http.Response, error) {
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		log.Print(err)
@@ -35,7 +35,7 @@ func (h *Helper) Request(method string, url string, body io.Reader) (*http.Respo
 
 func (h *Helper) getOneUser(mail string) []string {
 	searchUrl := h.gasAPI + "?action=search&sheetName=past-papers-web-db&searchColumn=email&searchValue=" + mail
-	res, err := h.Request("GET", searchUrl, nil)
+	res, err := h.request("GET", searchUrl, nil)
 	if err != nil {
 		log.Print(err)
 		return []string{}
@@ -61,7 +61,7 @@ func (h *Helper) CheckUser(mail string) bool {
 }
 
 func (h *Helper) GetWaitingList() [][]string {
-	res, err := h.Request("GET", h.gasAPI+"?action=readall&sheetName=waiting-list", nil)
+	res, err := h.request("GET", h.gasAPI+"?action=readall&sheetName=waiting-list", nil)
 	if err != nil {
 		log.Print(err)
 		return [][]string{}
@@ -97,7 +97,7 @@ func (h *Helper) RegisterUser(mail string, name string, studentId string) bool {
         "action": "add",
         "record": ` + userInfo + `}`
 
-	res, err := h.Request("POST", postUrl, strings.NewReader(reqBody))
+	res, err := h.request("POST", postUrl, strings.NewReader(reqBody))
 	if err != nil {
 		log.Print(err)
 		return false
