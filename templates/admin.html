@@ -16,16 +16,18 @@
       </thead>
       <!-- prettier-ignore -->
       <tbody>
-      {{ range .WaitingList }}
+      {{ range $widx, $content := .WaitingList }}
         <tr>
-          {{ range . }} <td class="text-right">{{ . }}</td> {{ end }}
-          <td class="text-center py-1"><button type="button" class="btn btn-outline-primary btn-sm">Approve</button></td>
+          {{ range $cidx, $c := $content }} <td class="text-right" id="waiting-list-{{ $widx }}-{{ $cidx }}">{{ $c }}</td> {{ end }}
+          <td class="text-center py-1">
+            <button type="button" class="btn btn-outline-primary btn-sm" id="approve-btn-{{ $widx }}">Approve</button>
+          </td>
         </tr>
       {{ end }}
     </tbody>
     </table>
   </div>
-  {{ template "WaitingList" }} {{ template "scripts" }}
+  {{ template "scripts" . }}
 </div>
 {{ end }}
 
@@ -43,10 +45,24 @@
     }
     window.alert('Tree refreshed')
   }
+  async function approve(idx) {
+    window.alert('Approving user...')
+    const waitingEmail = document.getElementById(`waiting-list-${idx}-0`).innerText
+    const waitingName = document.getElementById(`waiting-list-${idx}-1`).innerText
+    const waitingStudentId = document.getElementById(`waiting-list-${idx}-2`).innerText
+    const response = await fetch('/admin/approve', { method: 'POST', body: JSON.stringify({ email: waitingEmail, name: waitingName, studentId: waitingStudentId })})
+    if (!response.ok) {
+      console.error('Failed to approve')
+      window.alert('Failed to approve, please check the database manually')
+      return
+    }
+    window.alert('user ' + waitingName + ' approved')
+    window.location.reload()
+  }
+  for (let i = 0; i < {{ len .WaitingList }}; ++i) {
+    document.getElementById(`approve-btn-${i}`).onclick = async function () {
+      await approve(i)
+    }
+  }
 </script>
-{{ end }}
-
-<!-- -->
-{{ define "WaitingList"}}
-<div></div>
 {{ end }}
