@@ -1,3 +1,13 @@
+// Helper package provides functions to interact with GitHub API and Google Apps Script API.
+//
+// helper.go includes all the functions related to GitHub API.
+//   - Helper.NewHelper: Create a new helper instance.
+//   - Helper.requestAuth: Send a request with header authentication.
+//   - Helper.GetSHA: Get the SHA of the main branch.
+//   - Helper.CreateBranch: Create a branch with the given name.
+//   - Helper.Upload: Upload a file to the repository.
+//   - Helper.CreatePR: Create a pull request.
+//   - Helper.GetFile: Get the content of a file from the repository.
 package helper
 
 import (
@@ -13,15 +23,17 @@ import (
 	"past-papers-web/internal/config"
 )
 
+// Helper struct contains all the necessary data for the helper functions.
 type Helper struct {
 	githubAccessToken string
 	repoAPI           string
 	authorization     string
 	gasAPI            string
 	client            *http.Client
-	TreeNode          *TreeNode
+	TreeNode          *TreeNode // TreeNode: Root node of the tree structure.
 }
 
+// NewHelper creates a new helper instance.
 func NewHelper(config *config.Config) *Helper {
 	treeNode := ParseTree(InitTree(config))
 	return &Helper{
@@ -34,41 +46,30 @@ func NewHelper(config *config.Config) *Helper {
 	}
 }
 
-// Refresh the tree node by fetching the latest data from the GitHub API
-func RefreshTree(config *config.Config, h *Helper) {
-	h.TreeNode = ParseTree(InitTree(config))
-	return
+// Send a request given the method, URL, body and header. Returning the raw response and error.
+func (h *Helper) request(method, url string, body io.Reader, header map[string]string) (*http.Response, error) {
+	req, err := http.NewRequest(method, url, body)
+	if err != nil {
+		log.Print(err)
+		return nil, err
+	}
+	for k, v := range header {
+		req.Header.Set(k, v)
+	}
+	res, err := h.client.Do(req)
+	if err != nil {
+		log.Print(err)
+		return nil, err
+	}
+	return res, nil
 }
 
-// Initialize the tree node
-func InitTree(config *config.Config) map[string]interface{} {
-	client := &http.Client{} // Create HTTP request
-	req, err := http.NewRequest("GET", config.RepoAPI+"git/trees/main?recursive=1", nil)
-	if err != nil {
-		log.Fatalf("Error creating request: %v", err)
-	}
-	req.Header.Set("Authorization", "Bearer "+config.GitHubAccessToken)
-	res, err := client.Do(req)
-	if err != nil {
-		log.Fatalf("Error sending request: %v", err)
-	}
-
-	body, err := io.ReadAll(res.Body)
-
-	var data map[string]interface{}
-	json.Unmarshal([]byte(body), &data)
-
-	return data
-}
-
-func (h *Helper) GetSHA(apiPrefix string) string {
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", apiPrefix+"/heads/main", nil)
-	if err != nil {
-		log.Fatalf("Error creating request: %v", err)
-	}
-	req.Header.Set("Authorization", h.authorization)
-	res, err := client.Do(req)
+// Get the SHA of the main branch. Returning the SHA of the main branch.
+func (h *Helper) GetSHA() string {
+	// https://docs.github.com/en/rest/git/refs?apiVersion=2022-11-28#get-a-reference
+	// Repository permissions for "Contents"
+	// Repository permissions for "Workflows"
+	res, err := h.request("GET", h.repoAPI+"git/refs/heads/main", nil, map[string]string{"Authorization": h.authorization})
 	if err != nil {
 		log.Fatalf("Error sending request: %v", err)
 	}
@@ -78,20 +79,18 @@ func (h *Helper) GetSHA(apiPrefix string) string {
 	return data["object"].(map[string]interface{})["sha"].(string)
 }
 
+// Create a branch with the given name
+//
+// @return string: SHA of the created branch
+// @return error: Returns an error if the request fails.
 func (h *Helper) CreateBranch(branch string) (string, error) {
 	// https://docs.github.com/en/rest/git/refs?apiVersion=2022-11-28#create-a-reference
-	branchAPI := h.repoAPI + "git/refs"
-	sha := h.GetSHA(branchAPI)
-	client := &http.Client{}
+	// Repository permissions for "Contents"
+	// Repository permissions for "Workflows"
+	sha := h.GetSHA()
 	jsonData := []byte(`{"ref": "refs/heads/` + branch + `", "sha": "` + sha + `"}`)
 
-	req, err := http.NewRequest("POST", branchAPI, bytes.NewBuffer(jsonData))
-	if err != nil {
-		log.Fatalf("Error creating request: %v", err)
-	}
-	req.Header.Set("Authorization", h.authorization)
-
-	res, err := client.Do(req)
+	res, err := h.request("POST", h.repoAPI+"git/refs", bytes.NewBuffer(jsonData), map[string]string{"Authorization": h.authorization})
 	if err != nil {
 		log.Fatalf("Error sending request: %v", err)
 		return "", err
@@ -106,31 +105,36 @@ func (h *Helper) CreateBranch(branch string) (string, error) {
 	return "", errors.New(data["message"].(string))
 }
 
+// UploadData contains essential information for uploading a file to the repository.
 type UploadData struct {
 	Message string
-	Content string
+	Content string // Base64 encoded string
 	Branch  string
 	Sha     string
 }
 
+// Upload the given data to the repository at the given path
+//
+// @param uploadData: Pointer to the UploadData struct containing the data
+// @param path: Path to upload the file
+//
+// @return error: Returns an error if the request fails.
 func (h *Helper) Upload(uploadData *UploadData, path string) error {
-	client := &http.Client{}
+	// https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28#create-or-update-file-contents
+	// Repository permissions for "Contents"
+	header := map[string]string{
+		"Authorization": h.authorization,
+		"Accept":        "application/vnd.github+json",
+	}
 	jsonStr := []byte(`{
         "message": "` + uploadData.Message + `", ` +
 		`"content": "` + uploadData.Content + `", ` +
 		`"branch": "` + uploadData.Branch + `", ` +
 		`"sha": "` + uploadData.Sha + `"}`)
 
-	req, err := http.NewRequest("PUT", h.repoAPI+"contents/"+strings.TrimPrefix(path, "/"), bytes.NewBuffer(jsonStr))
-	req.Header.Set("Authorization", h.authorization)
-	req.Header.Set("Accept", "application/vnd.github+json")
+	res, err := h.request("PUT", h.repoAPI+"contents/"+strings.TrimPrefix(path, "/"), bytes.NewBuffer(jsonStr), header)
 	if err != nil {
 		log.Fatalf("Error creating request: %v", err)
-	}
-
-	res, err := client.Do(req)
-	if err != nil {
-		log.Fatalf("Error sending request: %v", err)
 	}
 
 	body, err := io.ReadAll(res.Body)
@@ -145,18 +149,17 @@ func (h *Helper) Upload(uploadData *UploadData, path string) error {
 }
 
 func (h *Helper) CreatePR(branch string) error {
-	client := &http.Client{}
+	// https://docs.github.com/en/rest/pulls/pulls?apiVersion=2022-11-28#create-a-pull-request
+	// Repository permissions for "Pull requests"
+	header := map[string]string{
+		"Authorization": h.authorization,
+		"Accept":        "application/vnd.github+json",
+	}
 	jsonStr := []byte(`{"head": "gnitoahc:` + branch + `", "base": "main", "title": "Create PR test"}`)
 
-	req, err := http.NewRequest("POST", h.repoAPI+"pulls", bytes.NewBuffer(jsonStr))
-	req.Header.Set("Authorization", h.authorization)
-	req.Header.Set("Accept", "application/vnd.github+json")
+	res, err := h.request("POST", h.repoAPI+"pulls", bytes.NewBuffer(jsonStr), header)
 	if err != nil {
 		log.Fatalf("Error creating request: %v", err)
-	}
-	res, err := client.Do(req)
-	if err != nil {
-		log.Fatalf("Error sending request: %v", err)
 	}
 
 	body, err := io.ReadAll(res.Body)
@@ -170,18 +173,18 @@ func (h *Helper) CreatePR(branch string) error {
 	return errors.New(data["message"].(string) + ", Status Code: " + strconv.Itoa(res.StatusCode))
 }
 
+// GetFile returns the raw content of the file
 func (h *Helper) GetFile(path string) ([]byte, error) {
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", h.repoAPI+"contents/"+path, nil)
+	// https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28#get-repository-content
+	// Repository permissions for "Contents"
+	// Repository permissions for "Workflows"
+	header := map[string]string{
+		"Authorization": h.authorization,
+		"Accept":        "application/vnd.github.raw+json",
+	}
+	res, err := h.request("GET", h.repoAPI+"contents/"+path, nil, header)
 	if err != nil {
 		log.Fatalf("Error creating request: %v", err)
-	}
-	req.Header.Set("Authorization", h.authorization)
-	req.Header.Set("Accept", "application/vnd.github.raw+json")
-
-	res, err := client.Do(req)
-	if err != nil {
-		log.Fatalf("Error sending request: %v", err)
 	}
 
 	body, err := io.ReadAll(res.Body)
