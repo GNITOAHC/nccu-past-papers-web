@@ -1,13 +1,3 @@
-// Helper package provides functions to interact with GitHub API and Google Apps Script API.
-//
-// database.go includes all the functions related to Google Apps Script API.
-//   - Helper.request: Send a request to the server. (Without any header authentication)
-//   - Helper.getOneUser: Get the user data from the database given the mail.
-//   - Helper.CheckUser: Check if the user exists in the database (RegisteredDB).
-//   - Helper.ApproveRegistration: Approve the registration of the user.
-//   - Helper.GetWaitingList: Get the waiting list from the database.
-//   - Helper.IsAdmin: Check if the user is an admin.
-//   - Helper.RegisterUser: Register the user to the waiting list.
 package helper
 
 import (
@@ -35,13 +25,9 @@ const (
 	WaitingListDB = "waiting-list"
 )
 
-// getOneUser returns the user data from the database.
-//
-// @param mail: mail to check
+// getOneUser returns the user data from the database, returns empty array if the user doesn't exist
 //
 // @return []string: user data _e.g._ ["mail@mail.com", "GNITOAHC", "123456"]
-//
-// If the user does not exists, it returns an empty array.
 func (h *Helper) getOneUser(mail string) []string {
 	searchUrl := h.gasAPI + "?action=search&sheetName=past-papers-web-db&searchColumn=email&searchValue=" + mail
 	res, err := h.request("GET", searchUrl, nil, nil)
@@ -70,11 +56,8 @@ func (h *Helper) CheckUser(mail string) bool {
 	return false
 }
 
-// ApproveRegistration approves the registration of the user. Returns an error if the registration fails.
-//
-// @param mail, name, studentId: user's data
-//
-// The function first delete the user from WaitingListDB and then add the user to RegisterDB if not yet registered.
+// ApproveRegistration approves the registration of the user given the user's info.
+// This function first delete the user from WaitingListDB and then add the user to RegisterDB if not yet registered.
 func (h *Helper) ApproveRegistration(mail, name, studentId string) error {
 	deleteBody := `{
         "sheetName": "waiting-list",
@@ -135,10 +118,6 @@ func (h *Helper) GetWaitingList() [][]string {
 }
 
 // IsAdmin reports whether the user is an admin.
-//
-// @param mail: mail to check
-//
-// @return bool: Returns true if the user is an admin.
 func (h *Helper) IsAdmin(mail string) bool {
 	data := h.getOneUser(mail)
 	if len(data) == 0 {
@@ -150,11 +129,8 @@ func (h *Helper) IsAdmin(mail string) bool {
 	return false
 }
 
-// RegisterUser registers the user to the waiting list.
-//
-// @param mail, name, studentId: user's data
-//
-// @return bool: Returns true if the registration is successful.
+// RegisterUser reports whether the user registers successfully. Given the user's info.
+// This function adds the user to the WaitingListDB.
 func (h *Helper) RegisterUser(mail string, name string, studentId string) bool {
 	userInfo := "[\"" + mail + "\", \"" + name + "\", \"'" + studentId + "\"]"
 	reqBody := `{

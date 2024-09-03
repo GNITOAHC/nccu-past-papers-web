@@ -1,13 +1,3 @@
-// Helper package provides functions to interact with GitHub API and Google Apps Script API.
-//
-// helper.go includes all the functions related to GitHub API.
-//   - Helper.NewHelper: Create a new helper instance.
-//   - Helper.requestAuth: Send a request with header authentication.
-//   - Helper.GetSHA: Get the SHA of the main branch.
-//   - Helper.CreateBranch: Create a branch with the given name.
-//   - Helper.Upload: Upload a file to the repository.
-//   - Helper.CreatePR: Create a pull request.
-//   - Helper.GetFile: Get the content of a file from the repository.
 package helper
 
 import (
@@ -79,10 +69,7 @@ func (h *Helper) GetSHA() string {
 	return data["object"].(map[string]interface{})["sha"].(string)
 }
 
-// Create a branch with the given name
-//
-// @return string: SHA of the created branch
-// @return error: Returns an error if the request fails.
+// CreateBranch creates a branch with the given name and returns the SHA of the created branch
 func (h *Helper) CreateBranch(branch string) (string, error) {
 	// https://docs.github.com/en/rest/git/refs?apiVersion=2022-11-28#create-a-reference
 	// Repository permissions for "Contents"
@@ -113,12 +100,7 @@ type UploadData struct {
 	Sha     string
 }
 
-// Upload the given data to the repository at the given path
-//
-// @param uploadData: Pointer to the UploadData struct containing the data
-// @param path: Path to upload the file
-//
-// @return error: Returns an error if the request fails.
+// UploadData uploads the given data to the repository at the given path
 func (h *Helper) Upload(uploadData *UploadData, path string) error {
 	// https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28#create-or-update-file-contents
 	// Repository permissions for "Contents"
@@ -148,6 +130,7 @@ func (h *Helper) Upload(uploadData *UploadData, path string) error {
 	return errors.New(data["message"].(string) + ", Status Code: " + strconv.Itoa(res.StatusCode))
 }
 
+// CreatePR creates a pull request with the given name
 func (h *Helper) CreatePR(branch string) error {
 	// https://docs.github.com/en/rest/pulls/pulls?apiVersion=2022-11-28#create-a-pull-request
 	// Repository permissions for "Pull requests"

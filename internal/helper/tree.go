@@ -1,12 +1,3 @@
-// Helper package provides functions to interact with GitHub API and Google Apps Script API.
-//
-// tree.go includes all the function related to the app's tree structure.
-//   - InitTree: Initialize the tree node, return raw data from the GitHub API.
-//   - RefreshTree: Refresh the tree node by fetching the latest data from the GitHub API.
-//   - TreeNode.GetChildren: Get the children from the given path in the current tree.
-//   - GetChildren: Get the children of the given tree node and path.
-//   - TreeNode.AddPath: Add a path to the tree.
-//   - ParseTree: Parse the tree structure from the GitHub API response.
 package helper
 
 import (
@@ -37,11 +28,7 @@ type githubEntry struct {
 	Url  string `json:"url"`
 }
 
-// Initialize the tree node
-//
-// @param config: Configuration data from package internal/config.
-//
-// @return map[string]interface{}: Data from the GitHub API.
+// InitTree initialize the tree node and returns the data from the GitHub API.
 func InitTree(config *config.Config) map[string]interface{} {
 	client := &http.Client{} // Create HTTP request
 	req, err := http.NewRequest("GET", config.RepoAPI+"git/trees/main?recursive=1", nil)
@@ -62,15 +49,13 @@ func InitTree(config *config.Config) map[string]interface{} {
 	return data
 }
 
-// Refresh the tree node by fetching the latest data from the GitHub API
-//
-// @param config: Configuration data from package internal/config.
-// @param h: Helper instance.
+// Refresh the tree node at given helper instance by fetching the latest data from the GitHub API
 func RefreshTree(config *config.Config, h *Helper) {
 	h.TreeNode = ParseTree(InitTree(config))
 	return
 }
 
+// GetChildren gets the children from the given path in the current tree.
 func (t *TreeNode) GetChildren(path string) (*TreeNode, error) {
 	if path == "" {
 		return t, nil
@@ -78,6 +63,7 @@ func (t *TreeNode) GetChildren(path string) (*TreeNode, error) {
 	return GetChildren(t, path)
 }
 
+// GetChildren gets the children of the given tree node and path.
 func GetChildren(root *TreeNode, path string) (*TreeNode, error) {
 	if path == "" {
 		return root, nil
@@ -94,6 +80,7 @@ func GetChildren(root *TreeNode, path string) (*TreeNode, error) {
 	return current, nil
 }
 
+// AddPath adds a path to the tree.
 func (t *TreeNode) AddPath(path []string, index int, entry githubEntry) {
 	if index >= len(path) {
 		return
@@ -116,6 +103,7 @@ func (t *TreeNode) AddPath(path []string, index int, entry githubEntry) {
 	t.Children[current].AddPath(path, index+1, entry)
 }
 
+// ParseTree parses the tree structure from the GitHub API response.
 func ParseTree(data map[string]interface{}) *TreeNode {
 	remar, err := json.Marshal(data["tree"]) // Re-marshal the data
 	if err != nil {
