@@ -20,9 +20,9 @@
 </script>
 <ul>
   {{ range .Items }} {{ if .IsTree }}
-  <li><a href="{{ .Link }}" class="underline">{{ .Name }}</a></li>
+  <li><a href="{{ .Link }}" class="text-decoration-none">{{ .Name }}</a></li>
   {{ else }}
-  <li><a href="{{ .Link }}">{{ .Name }}</a></li>
+  <li><a href="{{ .Link }}" class="text-decoration-underline">{{ .Name }}</a></li>
   {{ end }} {{ end }}
 </ul>
 
