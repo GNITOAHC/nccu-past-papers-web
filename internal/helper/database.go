@@ -5,7 +5,6 @@ import (
 	"errors"
 	"io"
 	"log"
-	"net/http"
 	"strings"
 )
 
@@ -26,38 +25,12 @@ const (
 	WaitingListDB = "waiting-list"
 )
 
-// request sends a request to the server according to the given parameters.
-//
-// @param method: HTTP method, _e.g._ "GET", "POST"
-// @param url: URL to send the request
-// @param body: Request body
-//
-// @return *http.Response: Response from the server
-// @return error: Returns an error if the request fails.
-func (h *Helper) request(method string, url string, body io.Reader) (*http.Response, error) {
-	req, err := http.NewRequest(method, url, body)
-	if err != nil {
-		log.Print(err)
-		return nil, err
-	}
-	res, err := h.client.Do(req)
-	if err != nil {
-		log.Print(err)
-		return nil, err
-	}
-	return res, nil
-}
-
-// getOneUser returns the user data from the database.
-//
-// @param mail: mail to check
+// getOneUser returns the user data from the database, returns empty array if the user doesn't exist
 //
 // @return []string: user data _e.g._ ["mail@mail.com", "GNITOAHC", "123456"]
-//
-// If the user does not exists, it returns an empty array.
 func (h *Helper) getOneUser(mail string) []string {
 	searchUrl := h.gasAPI + "?action=search&sheetName=past-papers-web-db&searchColumn=email&searchValue=" + mail
-	res, err := h.request("GET", searchUrl, nil)
+	res, err := h.request("GET", searchUrl, nil, nil)
 	if err != nil {
 		log.Print(err)
 		return []string{}
@@ -71,9 +44,7 @@ func (h *Helper) getOneUser(mail string) []string {
 	return data[0]
 }
 
-// CheckUser reports whether the user exists in the database.
-//
-// @param mail: mail to check
+// CheckUser reports whether the user exists in the database(RegisterDB). (Given the mail)
 func (h *Helper) CheckUser(mail string) bool {
 	data := h.getOneUser(mail)
 	if len(data) == 0 {
@@ -85,18 +56,15 @@ func (h *Helper) CheckUser(mail string) bool {
 	return false
 }
 
-// ApproveRegistration approves the registration of the user.
-//
-// @param mail, name, studentId: user's data
-//
-// @return error: Returns an error if the registration fails.
+// ApproveRegistration approves the registration of the user given the user's info.
+// This function first delete the user from WaitingListDB and then add the user to RegisterDB if not yet registered.
 func (h *Helper) ApproveRegistration(mail, name, studentId string) error {
 	deleteBody := `{
         "sheetName": "waiting-list",
         "action": "delete",
         "columnName": "email",
         "rowValue": "` + mail + `"}`
-	res, err := h.request("POST", h.gasAPI, strings.NewReader(deleteBody))
+	res, err := h.request("POST", h.gasAPI, strings.NewReader(deleteBody), nil)
 	if err != nil {
 		log.Print(err)
 		return err
@@ -108,21 +76,22 @@ func (h *Helper) ApproveRegistration(mail, name, studentId string) error {
 	}
 
 	registered := h.CheckUser(mail)
-	if !registered {
-		userInfo := "[\"" + mail + "\", \"" + name + "\", \"'" + studentId + "\"]"
-		reqBody := `{
+	if registered {
+		return nil
+	}
+
+	userInfo := "[\"" + mail + "\", \"" + name + "\", \"'" + studentId + "\"]"
+	reqBody := `{
             "sheetName": "past-papers-web-db",
             "action": "add",
             "record": ` + userInfo + `}`
-
-		res, err := h.request("POST", h.gasAPI, strings.NewReader(reqBody))
-		if err != nil {
-			log.Print(err)
-			return err
-		}
-		if res.Status != "200 OK" {
-			return errors.New("Failed to add user")
-		}
+	res, err = h.request("POST", h.gasAPI, strings.NewReader(reqBody), nil)
+	if err != nil {
+		log.Print(err)
+		return err
+	}
+	if res.Status != "200 OK" {
+		return errors.New("Failed to add user")
 	}
 	return nil
 }
@@ -131,7 +100,7 @@ func (h *Helper) ApproveRegistration(mail, name, studentId string) error {
 //
 // @return [][]string: Waiting list data _e.g._ [["mail1", "name1", "123456"], ["mail2", "name2", "654321"]]
 func (h *Helper) GetWaitingList() [][]string {
-	res, err := h.request("GET", h.gasAPI+"?action=readall&sheetName=waiting-list", nil)
+	res, err := h.request("GET", h.gasAPI+"?action=readall&sheetName=waiting-list", nil, nil)
 	if err != nil {
 		log.Print(err)
 		return [][]string{}
@@ -149,10 +118,6 @@ func (h *Helper) GetWaitingList() [][]string {
 }
 
 // IsAdmin reports whether the user is an admin.
-//
-// @param mail: mail to check
-//
-// @return bool: Returns true if the user is an admin.
 func (h *Helper) IsAdmin(mail string) bool {
 	data := h.getOneUser(mail)
 	if len(data) == 0 {
@@ -164,11 +129,8 @@ func (h *Helper) IsAdmin(mail string) bool {
 	return false
 }
 
-// RegisterUser registers the user to the waiting list.
-//
-// @param mail, name, studentId: user's data
-//
-// @return bool: Returns true if the registration is successful.
+// RegisterUser reports whether the user registers successfully. Given the user's info.
+// This function adds the user to the WaitingListDB.
 func (h *Helper) RegisterUser(mail string, name string, studentId string) bool {
 	userInfo := "[\"" + mail + "\", \"" + name + "\", \"'" + studentId + "\"]"
 	reqBody := `{
@@ -176,7 +138,7 @@ func (h *Helper) RegisterUser(mail string, name string, studentId string) bool {
         "action": "add",
         "record": ` + userInfo + `}`
 
-	res, err := h.request("POST", h.gasAPI, strings.NewReader(reqBody))
+	res, err := h.request("POST", h.gasAPI, strings.NewReader(reqBody), nil)
 	if err != nil {
 		log.Print(err)
 		return false
