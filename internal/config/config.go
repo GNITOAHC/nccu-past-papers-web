@@ -15,6 +15,7 @@ type Config struct {
 	SMTPPass          string
 	SMTPHost          string
 	SMTPPort          string
+	GEMINI_API_KEY    string
 }
 
 func NewConfig() *Config {
@@ -31,5 +32,6 @@ func NewConfig() *Config {
 		SMTPPass:          os.Getenv("SMTP_PASS"),
 		SMTPHost:          os.Getenv("SMTP_HOST"),
 		SMTPPort:          os.Getenv("SMTP_PORT"),
+		GEMINI_API_KEY:    os.Getenv("GEMINI_API_KEY"),
 	}
 }

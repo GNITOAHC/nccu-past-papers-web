@@ -7,38 +7,25 @@ import (
 	"io"
 	"net/http"
 	"sort"
-	"strings"
-	"time"
 
 	"past-papers-web/internal/helper"
 )
 
 type contentItem struct {
-	Link   string
-	Name   string
-	IsTree bool
+	Link     string
+	Name     string
+	Download string
+	IsTree   bool
 }
 
 func (a *App) ContentHandler(w http.ResponseWriter, r *http.Request) {
 	urlpath := r.URL.Path[len("/content/"):]
-	fileContent := map[string]string{
-		".pdf":  "application/pdf",
-		".png":  "image/png",
-		".jpg":  "image/jpeg",
-		".jpeg": "image/jpeg",
-	}
 
 	switch r.Method {
 	case http.MethodPost:
 		a.uploadFile(w, r)
 		return
 	case http.MethodGet:
-		for k, v := range fileContent { // If GET request for file
-			if strings.HasSuffix(urlpath, k) {
-				a.handleFile(w, v, urlpath)
-				return
-			}
-		}
 		a.GetContent(w, r, urlpath) // Else handle content page
 		return
 	default:
@@ -99,30 +86,6 @@ func (a *App) uploadFile(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func (a *App) handleFile(w http.ResponseWriter, contentType string, urlpath string) {
-	var pdfData []byte
-	if data, has := a.filecache.Get(urlpath); has { // Has file in cache
-		pdfData = data
-	} else {
-		data, err := a.helper.GetFile(urlpath)
-		if err != nil {
-			fmt.Fprintf(w, "%s", err)
-		}
-		a.filecache.Set(urlpath, data, time.Duration(time.Hour*360)) // Cache for 15 days
-		pdfData = data
-	}
-
-	b := bytes.NewBuffer(pdfData)
-
-	w.Header().Set("Content-type", contentType)
-	if _, err := b.WriteTo(w); err != nil {
-		fmt.Fprintf(w, "%s", err)
-	}
-
-	w.Write([]byte("File Generated"))
-	return
-}
-
 func (a *App) GetContent(w http.ResponseWriter, r *http.Request, urlpath string) {
 	items := make([]contentItem, 0)
 
@@ -139,13 +102,21 @@ func (a *App) GetContent(w http.ResponseWriter, r *http.Request, urlpath string)
 
 	for _, k := range keys {
 		v := treeNode.Children[k]
+		link := ""
+		if v.IsDir {
+			link = "/content" + v.Path
+		} else {
+			link = "/chat" + v.Path
+		}
 		items = append(items, contentItem{
-			Link:   "/content" + v.Path, // Absolute path (starts with /content)
-			Name:   v.Name,
-			IsTree: v.IsDir,
+			Link:     link, // Absolute path (starts with /content)
+			Name:     v.Name,
+			Download: "/file" + v.Path,
+			IsTree:   v.IsDir,
 		})
 	}
 
+	// Prepend slash to url if not empty
 	if urlpath != "" {
 		urlpath = "/" + urlpath
 	}

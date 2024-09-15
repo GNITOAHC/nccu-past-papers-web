@@ -18,13 +18,37 @@
   contentBreadcrumb.lastElementChild.innerHTML =
     pathArray.length === 1 ? 'HOME' : pathArray.slice(-1)
 </script>
-<ul>
+<ul class="list-group my-3">
   {{ range .Items }} {{ if .IsTree }}
-  <li><a href="{{ .Link }}" class="text-decoration-none">{{ .Name }}</a></li>
+  <li class="list-group-item">
+    <a href="{{ .Link }}" class="text-decoration-none">{{ .Name }}</a>
+  </li>
   {{ else }}
-  <li><a href="{{ .Link }}" class="text-decoration-underline">{{ .Name }}</a></li>
+  <li class="list-group-item with-chat-option">
+    <span
+      class="text-decoration-underline text-primary-emphasis"
+      type="button"
+      data-bs-toggle="dropdown"
+      aria-expanded="false"
+    >
+      {{ .Name }}
+    </span>
+    <ul class="dropdown-menu">
+      <li><a class="dropdown-item chat-option" href="{{ .Link }}">Chat</a></li>
+      <li><a class="dropdown-item" href="{{ .Download }}">Download</a></li>
+    </ul>
+  </li>
   {{ end }} {{ end }}
 </ul>
+
+<style>
+  .chat-option {
+    display: none;
+    @media screen and (min-width: 768px) {
+      display: block;
+    }
+  }
+</style>
 
 <form id="upload-form" class="h-20" enctype="multipart/form-data">
   <input type="text" name="name" placeholder="Name" />

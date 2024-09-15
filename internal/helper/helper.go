@@ -174,3 +174,20 @@ func (h *Helper) GetFile(path string) ([]byte, error) {
 
 	return body, nil
 }
+
+func (h *Helper) FileReader(path string) (io.Reader, error) {
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", h.repoAPI+"contents/"+path, nil)
+	if err != nil {
+		log.Fatalf("Error creating request: %v", err)
+	}
+	req.Header.Set("Authorization", h.authorization)
+	req.Header.Set("Accept", "application/vnd.github.raw+json")
+
+	res, err := client.Do(req)
+	if err != nil {
+		log.Fatalf("Error sending request: %v", err)
+	}
+
+    return res.Body, nil
+}
