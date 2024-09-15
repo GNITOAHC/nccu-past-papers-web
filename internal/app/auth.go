@@ -45,6 +45,7 @@ func (a *App) Login(w http.ResponseWriter, r *http.Request) {
 		err := tmpl.Execute(w, nil)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+            return
 		}
 	}
 	if r.Method == "POST" {
