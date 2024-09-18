@@ -1,4 +1,4 @@
-package mail
+package mailer
 
 import (
 	"bytes"
@@ -7,18 +7,18 @@ import (
 	"net/smtp"
 )
 
-type Mail struct {
+type Mailer struct {
 	from string
 	pass string
 	host string
 	port string
 }
 
-func New(from, pass, host, port string) *Mail {
-	return &Mail{from: from, pass: pass, host: host, port: port}
+func New(from, pass, host, port string) *Mailer {
+	return &Mailer{from: from, pass: pass, host: host, port: port}
 }
 
-func (m *Mail) Send(to, subject, content string) error {
+func (m *Mailer) Send(to, subject, content string) error {
 	// Authentication
 	auth := smtp.PlainAuth("", m.from, m.pass, m.host)
 	// Build mail

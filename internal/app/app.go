@@ -8,10 +8,10 @@ import (
 	"net/http"
 	"time"
 
-	"past-papers-web/internal/cache"
+	"past-papers-web/cache"
 	"past-papers-web/internal/config"
 	"past-papers-web/internal/helper"
-	"past-papers-web/internal/mail"
+	"past-papers-web/mailer"
 )
 
 var (
@@ -24,7 +24,7 @@ type App struct {
 	usercache *cache.Cache[string, interface{}] // Cache for users who are logged in
 	filecache *cache.Cache[string, []byte]      // Cache for files from the server
 	chatcache *cache.Cache[string, string]      // Cache for uploaded files to Gemini
-	mailer    *mail.Mail
+	mailer    *mailer.Mailer
 }
 
 func StartServer() {
@@ -47,7 +47,7 @@ func NewApp() *App {
 	usercache := cache.New[string, interface{}]()
 	filecache := cache.New[string, []byte]()
 	chatcache := cache.New[string, string]()
-	mailer := mail.New(config.SMTPFrom, config.SMTPPass, config.SMTPHost, config.SMTPPort)
+	mailer := mailer.New(config.SMTPFrom, config.SMTPPass, config.SMTPHost, config.SMTPPort)
 	return &App{
 		helper:    helper.NewHelper(config),
 		config:    config,
