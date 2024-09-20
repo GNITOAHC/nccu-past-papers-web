@@ -12,7 +12,7 @@ func (a *App) adminProtect(next http.HandlerFunc) http.HandlerFunc {
 			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
 		}
-		if a.helper.IsAdmin(cookie.Value) { // Has admin user in DB
+		if cookie.Value == a.config.ADMIN_MAIL {
 			next.ServeHTTP(w, r)
 			return
 		}

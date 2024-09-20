@@ -5,17 +5,11 @@ import (
 	"os"
 	"testing"
 
-	"past-papers-web/dotenv"
 	"past-papers-web/internal/config"
 )
 
 func TestUploadCombos(t *testing.T) {
-	err := dotenv.Load("./.env") // Load .env under same directory
-	if err != nil {
-		t.Log("Error loading .env file")
-	}
-
-	config := config.NewConfig()
+	config := config.NewConfig("../../.env")
 	h := NewHelper(config)
 
 	newBranchName := "upload-test-0"

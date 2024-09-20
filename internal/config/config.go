@@ -16,10 +16,11 @@ type Config struct {
 	SMTPHost          string
 	SMTPPort          string
 	GEMINI_API_KEY    string
+	ADMIN_MAIL        string
 }
 
-func NewConfig() *Config {
-	err := dotenv.Load()
+func NewConfig(envpaths ...string) *Config {
+	err := dotenv.Load(envpaths...)
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
@@ -33,5 +34,6 @@ func NewConfig() *Config {
 		SMTPHost:          os.Getenv("SMTP_HOST"),
 		SMTPPort:          os.Getenv("SMTP_PORT"),
 		GEMINI_API_KEY:    os.Getenv("GEMINI_API_KEY"),
+		ADMIN_MAIL:        os.Getenv("ADMIN_MAIL"),
 	}
 }
