@@ -42,10 +42,9 @@ func (a *App) Register(w http.ResponseWriter, r *http.Request) {
 func (a *App) Login(w http.ResponseWriter, r *http.Request) {
 	renderTmpl := func() {
 		tmpl := template.Must(template.ParseFiles("templates/base.html", "templates/entry.html"))
-		err := tmpl.Execute(w, nil)
-		if err != nil {
+		if err := tmpl.Execute(w, nil); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
-            return
+			return
 		}
 	}
 	if r.Method == "POST" {
