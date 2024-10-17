@@ -47,7 +47,7 @@ func NewApp() *App {
 	usercache := cache.New[string, interface{}]()
 	filecache := cache.New[string, []byte]()
 	chatcache := cache.New[string, string]()
-	mailer := mailer.New(config.SMTPFrom, config.SMTPPass, config.SMTPHost, config.SMTPPort)
+	mailer := mailer.New(config.SMTPFrom, config.SMTPPass, config.SMTPHost, config.SMTPPort, 10)
 	return &App{
 		helper:    helper.NewHelper(config),
 		config:    config,
