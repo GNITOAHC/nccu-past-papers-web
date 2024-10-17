@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"html/template"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -24,6 +25,8 @@ func (a *App) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Write([]byte("Success, please check your email and wait for approval.")) // Write to response first
+
+	// Send mail to user
 	t, err := template.ParseFiles("templates/mail/register.html")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -36,6 +39,23 @@ func (a *App) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	a.mailer.Send(email, "Registration", buf.String())
+
+	// Send mail to administator
+	t, err = template.ParseFiles("templates/mail/regadminnotify.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	buf = new(bytes.Buffer)
+	data = map[string]interface{}{"Name": name, "Email": email, "StudentId": studentId}
+	if err = t.Execute(buf, data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	for _, admin := range strings.Split(a.config.ADMIN_MAIL, ",") {
+		a.mailer.Send(strings.TrimSpace(admin), "New Registration", buf.String())
+	}
+
 	return
 }
 

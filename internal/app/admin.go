@@ -3,6 +3,7 @@ package app
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 )
 
 func (a *App) adminProtect(next http.HandlerFunc) http.HandlerFunc {
@@ -12,7 +13,14 @@ func (a *App) adminProtect(next http.HandlerFunc) http.HandlerFunc {
 			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
 		}
-		if cookie.Value == a.config.ADMIN_MAIL {
+		if ok := func() bool {
+			for _, mail := range strings.Split(a.config.ADMIN_MAIL, ",") {
+				if strings.TrimSpace(mail) == cookie.Value {
+					return true
+				}
+			}
+			return false
+		}(); ok {
 			next.ServeHTTP(w, r)
 			return
 		}
