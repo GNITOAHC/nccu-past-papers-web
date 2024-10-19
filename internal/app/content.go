@@ -9,6 +9,7 @@ import (
 	"sort"
 
 	"past-papers-web/internal/helper"
+	"past-papers-web/templates"
 )
 
 type contentItem struct {
@@ -87,6 +88,9 @@ func (a *App) uploadFile(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) GetContent(w http.ResponseWriter, r *http.Request, urlpath string) {
+	// Define files to be ignored
+	ignores := []string{"README.md", ".gitignore"}
+
 	items := make([]contentItem, 0)
 
 	treeNode, err := a.helper.TreeNode.GetChildren(urlpath)
@@ -100,6 +104,9 @@ func (a *App) GetContent(w http.ResponseWriter, r *http.Request, urlpath string)
 	}
 	sort.Strings(keys)
 
+	hasreadme := false
+
+outer:
 	for _, k := range keys {
 		v := treeNode.Children[k]
 		link := ""
@@ -107,6 +114,16 @@ func (a *App) GetContent(w http.ResponseWriter, r *http.Request, urlpath string)
 			link = "/content" + v.Path
 		} else {
 			link = "/chat" + v.Path
+		}
+		if v.Name == "README.md" {
+			hasreadme = true
+		}
+
+		// Ignore files
+		for _, ignore := range ignores {
+			if v.Name == ignore {
+				continue outer
+			}
 		}
 		items = append(items, contentItem{
 			Link:     link, // Absolute path (starts with /content)
@@ -116,13 +133,31 @@ func (a *App) GetContent(w http.ResponseWriter, r *http.Request, urlpath string)
 		})
 	}
 
+	var readme string
+	if hasreadme {
+		readmeb, err := a.helper.GetFile(urlpath + "/README.md")
+		if err != nil {
+			fmt.Println("Error getting readme", err)
+		}
+		readme = string(readmeb)
+	}
+
 	// Prepend slash to url if not empty
 	if urlpath != "" {
 		urlpath = "/" + urlpath
 	}
-	a.tmplExecute(w, []string{"templates/content.html"}, map[string]interface{}{
-		"Path":  "content" + urlpath,
-		"Items": items,
+	// a.tmplExecute(w, []string{"templates/content.html"}, map[string]interface{}{
+	// 	"Path":      "content" + urlpath,
+	// 	"Items":     items,
+	// 	"HasReadme": hasreadme,
+	// 	"Readme":    readme,
+	// })
+    // log.Println(items)
+	templates.Render(w, "content.html", map[string]interface{}{
+		"Path":      "content" + urlpath,
+		"Items":     items,
+		"HasReadme": hasreadme,
+		"Readme":    readme,
 	})
-	return
+	// return
 }

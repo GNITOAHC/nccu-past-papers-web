@@ -1,26 +1,28 @@
-{{ define "body" }}
 <div>
   <h1>Admin</h1>
-  <button type="button" class="btn btn-primary" id="refresh-btn">
+  <button type="button" class="border border-black p-1 rounded-md" id="refresh-btn">
     Refresh Tree
   </button>
-  <div class="container">
-    <table class="table">
+  <div>
+    <table class="table-auto">
       <thead>
         <tr>
-          <th scope="col">Mail</th>
-          <th scope="col">Name</th>
-          <th scope="col">StudentId</th>
-          <th scope="col"></th>
+          <th>Mail</th>
+          <th>Name</th>
+          <th>StudentId</th>
+          <th></th>
         </tr>
       </thead>
       <!-- prettier-ignore -->
-      <tbody>
+      <tbody class="gap-2">
       {{ range $widx, $content := .WaitingList }}
         <tr>
-          {{ range $cidx, $c := $content }} <td class="text-right" id="waiting-list-{{ $widx }}-{{ $cidx }}">{{ $c }}</td> {{ end }}
-          <td class="text-center py-1">
-            <button type="button" class="btn btn-outline-primary btn-sm" id="approve-btn-{{ $widx }}">Approve</button>
+          <!-- prettier-ignore -->
+          {{ range $cidx, $c := $content }}
+            <td class="text-left pl-8" id="waiting-list-{{ $widx }}-{{ $cidx }}">{{ $c }}</td>
+          {{ end }}
+          <td class="text-center pl-8">
+            <button type="button" class="" id="approve-btn-{{ $widx }}">Approve</button>
           </td>
         </tr>
       {{ end }}
@@ -29,7 +31,6 @@
   </div>
   {{ template "scripts" . }}
 </div>
-{{ end }}
 
 <!-- -->
 

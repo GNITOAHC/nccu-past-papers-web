@@ -4,42 +4,39 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>NCCUCS Past Papers Web</title>
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
-      crossorigin="anonymous"
-    />
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- htmx -->
     <script
-      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-      integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+      src="https://unpkg.com/htmx.org@2.0.3"
+      integrity="sha384-0895/pl2MU10Hqc6jd4RvrthNlDiE9U1tWmX7WRESftEDRosgxNsQG/Ze9YMRzHq"
       crossorigin="anonymous"
     ></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Alpine.js -->
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs-twmerge@latest/dist/alpinejs-twmerge.cdn.js"></script>
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
+    ></script>
+
+    <!-- Tailwindcss -->
+    <link href="/static/output.css" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
+
     <title>{{ .Title }}</title>
   </head>
 
-  <style>
-    [data-bs-theme='dark'] {
-      --bs-body-bg: rgb(3 8 22);
-    }
-    .rounded-b {
-      border-bottom-right-radius: 0.5rem;
-      border-bottom-left-radius: 0.5rem;
-    }
-    body {
-      height: 100vh;
-    }
-  </style>
-
   {{ template "themescript" }}
 
-  <body>
-    <div class="d-flex flex-column h-100">
+  <body class="h-[100dvh]">
+    <div class="flex flex-col h-full max-w-6xl mx-auto">
       {{ template "header" }}
-      <div class="h-100 flex-grow-1 d-flex flex-column">
-        <div class="flex-grow-1">{{ template "body" . }}</div>
-        <!-- <footer> <p class="text-center">© 2021 NCCUCS</p> </footer> -->
+      <div class="flex flex-grow flex-col">
+        <div class="flex flex-col flex-grow">{{ .Body }}</div>
+        <footer><p class="text-center">© 2021 NCCUCS</p></footer>
       </div>
     </div>
   </body>
@@ -51,115 +48,73 @@
 <script>
   // function to set a given theme/color-scheme (light, dark, or system)
   function setTheme(themeName) {
-    if (themeName === 'system')
-      themeName = window.matchMedia('(prefers-color-scheme: dark)').matches
-        ? 'dark'
-        : 'light'
-    localStorage.setItem('theme', themeName)
-    document.documentElement.setAttribute('data-bs-theme', themeName)
+    if (themeName === "system")
+      themeName = window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light";
+    localStorage.setItem("theme", themeName);
+    document.documentElement.setAttribute("class", themeName);
   }
   // Immediately invoked function to set the theme on initial load
-  ;(function () {
-    setTheme(localStorage.getItem('theme') || 'system')
-  })()
+  (function () {
+    setTheme(localStorage.getItem("theme") || "system");
+  })();
 </script>
 {{ end }}
 
 <!-- -->
 
 {{ define "header" }}
-<header style="background-color: rgb(33 41 54)" class="navbar rounded-b">
-  <div class="container-fluid">
-    <h1 class="header-h1">
-      <a href="/content/" class="text-white text-decoration-none"
+<header>
+  <div class="flex justify-between items-center px-4 py-5">
+    <h1 class="text-xl md:text-2xl lg:text-3xl">
+      <a href="/content/" class="text-foreground text-decoration-none"
         >NCCUCS - Past paper web</a
       >
     </h1>
-    <style>
-      .header-h1 {
-        font-size: 1.5rem;
-      }
-      @media screen and (max-width: 768px) {
-        .header-h1 {
-          font-size: 1rem;
-        }
-      }
-    </style>
-    <div style="display: flex; flex-direction: row; column-gap: 0.7rem">
-      {{ template "dropdown-button" }}
+    <div class="inline-flex gap-2">
+      <!-- prettier-ignore -->
+      {{ $themeMenu := dict "Light" "light" "Dark" "dark" "System" "system" }}
+      {{ $buttonClass := "bg-white text-black px-2.5 py-2.5 rounded-md shadow" }}
+      {{ template "dropdown" (dict 
+        "Menu" $themeMenu "TitleId" "dropdownToggle" "Title" "Theme" "OptionId" "theme-toggle" "ButtonClass" $buttonClass)
+      }}
       <a
-        style="color: black; background: white"
-        class="btn header-btn"
         href="https://github.com/gnitoahc/nccu-past-papers-web"
-        ><i data-lucide="github"></i
-      ></a>
-      <script>
-        lucide.createIcons()
-      </script>
+        target="_blank"
+        class="bg-white text-black px-2.5 py-2.5 rounded-md shadow ml-2"
+      >
+        <i data-lucide="github"></i>
+      </a>
     </div>
-    <style>
-      .header-btn {
-        --bs-btn-padding-x: 0.5rem;
-        --bs-btn-padding-y: 0.25rem;
-      }
-    </style>
   </div>
   <script>
     function getSvgIcon(theme) {
-      if (theme == 'dark') return `<i data-lucide="moon"></i>`
-      else if (theme == 'light') return `<i data-lucide="sun"></i>`
+      if (theme == "dark") return `<i data-lucide="moon"></i>`;
+      else if (theme == "light") return `<i data-lucide="sun"></i>`;
       else {
-        return window.matchMedia('(prefers-color-scheme: dark)').matches
+        return window.matchMedia("(prefers-color-scheme: dark)").matches
           ? `<i data-lucide="moon"></i>`
-          : `<i data-lucide="sun"></i>`
+          : `<i data-lucide="sun"></i>`;
       }
     }
-    for (const button of document.querySelectorAll('.theme-toggle')) {
-      button.addEventListener('click', (event) => {
-        setTheme(event.target.value)
-        document.getElementById('dropdownMenuButton').innerHTML = getSvgIcon(
+    for (const button of document.querySelectorAll(
+      "[optionid='theme-toggle']"
+    )) {
+      button.addEventListener("click", (event) => {
+        setTheme(event.target.value);
+        document.getElementById("dropdownToggle").innerHTML = getSvgIcon(
           event.target.value
-        )
-        lucide.createIcons()
-      })
+        );
+        lucide.createIcons();
+      });
     }
-    ;(function () {
-      document.getElementById('dropdownMenuButton').innerHTML = getSvgIcon(
-        localStorage.getItem('theme') || 'system'
-      )
-      lucide.createIcons()
-    })()
+    (function () {
+      document.getElementById("dropdownToggle").innerHTML = getSvgIcon(
+        localStorage.getItem("theme") || "system"
+      );
+      lucide.createIcons();
+    })();
   </script>
 </header>
-{{ end }}
-
-<!-- -->
-
-{{ define "dropdown-button"}}
-<div class="dropdown">
-  <button
-    id="dropdownMenuButton"
-    class="btn header-btn"
-    type="button"
-    data-bs-toggle="dropdown"
-    aria-expanded="false"
-    style="color: black; background: white"
-  ></button>
-  <ul class="dropdown-menu header-dropdown-menu">
-    <li>
-      <button class="dropdown-item theme-toggle" value="light">Light</button>
-    </li>
-    <li>
-      <button class="dropdown-item theme-toggle" value="dark">Dark</button>
-    </li>
-    <li>
-      <button class="dropdown-item theme-toggle" value="system">System</button>
-    </li>
-  </ul>
-  <style>
-    .header-dropdown-menu {
-      --bs-dropdown-min-width: 1rem;
-    }
-  </style>
-</div>
 {{ end }}
