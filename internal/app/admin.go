@@ -3,6 +3,7 @@ package app
 import (
 	"encoding/json"
 	"net/http"
+	"past-papers-web/templates"
 	"strings"
 )
 
@@ -39,10 +40,12 @@ func (a *App) RegisterAdminRoutes(prefix string, mux *http.ServeMux) {
 }
 
 func (a *App) Admin(w http.ResponseWriter, r *http.Request) {
-	a.tmplExecute(w, []string{"templates/admin.html"}, map[string]interface{}{
+	templates.Render(w, "admin.html", map[string]interface{}{
 		"WaitingList": a.helper.GetWaitingList(),
 	})
-	return
+	// a.tmplExecute(w, []string{"templates/admin.html"}, map[string]interface{}{
+	// 	"WaitingList": a.helper.GetWaitingList(),
+	// })
 }
 
 // ApproveRegistration approves the registration of the user.

@@ -1,188 +1,134 @@
-{{ define "body" }}
 <div style="padding-left: 6rem; padding-right: 6rem; padding-top: 15%">
-  <h1 class="mb-4 d-flex justify-content-center" id="entry-title">Login</h1>
-  {{ template "login-form" }} {{ template "register-form" }}
-  <!-- -->
-  {{ template "modal" }} {{ template "script" }}
+  <div x-data="{ login: true, showspinner: false }">
+    <h1 class="mb-4 flex justify-center" x-show="login">Login</h1>
+    <h1 class="mb-4 flex justify-center" x-show="!login">Register</h1>
+    <!-- prettier-ignore -->
+    {{ template "login-form" }} {{ template "register-form" }}
+    {{ template "spinner" (dict "Id" "Spinner" "ShowName" "showspinner") }}
+  </div>
+  <!-- prettier-ignore -->
+  {{ template "script" }}
 </div>
-{{ end }}
 
 <!-- -->
 
 {{ define "login-form" }}
-<div
-  id="login-div"
-  class="flex-column w-100 justify-content-center align-items-center"
-  style="display: flex"
->
+<div class="flex flex-col justify-center items-center" x-show="login">
   <form
     method="post"
     action=""
-    style="display: flex; justify-content: center; width: 20rem"
+    class="inline-flex gap-2 justify-center w-80"
     enctype="multipart/form-data"
   >
     <input
       type="text"
       name="email"
       placeholder="example@example.com"
-      class="form-control"
-      aria-describedby="button-addon"
       autocomplete="email"
     />
-    <button
-      type="submit"
-      class="btn btn-secondary login-bi-btn"
-      id="button-addon"
-    >
-      Login
-    </button>
-    <button
-      type="submit"
-      class="btn btn-secondary login-sm-btn"
-      id="button-addon"
-    >
-      &gt;
-    </button>
+    <button type="submit" class="hidden md:block">Login</button>
+    <button type="submit" class="md:hidden">&gt;</button>
   </form>
-  <div style="place-content: end">
-    <button
-      onclick="showForm('register')"
-      id="login-btn"
-      style="background: none; border: none; cursor: pointer"
-      class="btn btn-sm"
-    >
+  <div class="place-content-end">
+    <button x-on:click="login = false" class="cursor-pointer">
       No account? Register
     </button>
   </div>
 </div>
-<style>
-  .login-bi-btn {
-    display: block;
-  }
-  .login-sm-btn {
-    display: none;
-  }
-  @media screen and (max-width: 640px) {
-    .login-bi-btn {
-      display: none;
-    }
-    .login-sm-btn {
-      display: block;
-    }
-  }
-</style>
 {{ end }}
 
 <!-- -->
 
 {{ define "register-form" }}
-<div
-  id="register-div"
-  style="width: 100%; display: none; justify-content: center"
->
+<div class="flex w-full justify-center" x-show="!login">
   <form
-    method="post"
+    class="content-center w-80"
     id="register-form"
-    action="/register"
-    style="justify-content: center; width: 20rem"
     enctype="multipart/form-data"
+    x-data="{ modalOpen: false }"
   >
-    <!-- Form here -->
-    <button type="submit" class="btn btn-secondary" id="button-addon">
+    <!-- prettier-ignore -->
+    {{ $label := list "Email" "Name" "Student ID" }}
+    {{ $name := list "email" "name" "studentId" }}
+    {{ $placeholder := list "example@example.com" "Your name" "Your student ID" }}
+    {{ $autocomplete := list "email" "name" "id" }}
+    {{ range $i, $v := $label }}
+    <div class="mb-3">
+      <label class="form-label">{{ $v }}</label>
+      <input
+        type="text"
+        name="{{ index $name $i }}"
+        placeholder="{{ index $placeholder $i }}"
+        class="form-control"
+        autocomplete="{{ index $autocomplete $i }}"
+      />
+    </div>
+    {{ end }}
+
+    <button
+      type="submit"
+      x-on:click="modalOpen = true"
+      hx-post="/register"
+      hx-target="#auth-modal-body"
+      hx-on::before-request="replaceSpinner()"
+      hx-swap="innerHTML"
+    >
       Register
     </button>
-    <div style="width: 100%; place-content: end; display: flex">
-      <button
-        onclick="showForm('login')"
-        type="button"
-        id="register-btn"
-        style="display: none; background: none; border: none; cursor: pointer"
-        class="btn btn-sm"
-      >
+    {{ template "modal" }}
+
+    <div class="flex w-full content-end">
+      <button x-on:click="login = true" class="cursor-pointer">
         Have an account? Login
       </button>
     </div>
   </form>
 </div>
-<script>
-  const formConstroctData = [
-    // ['Label', 'name', 'placeholder', 'autocomplete']
-    ['Email', 'email', 'example@example.com', 'email'],
-    ['Name', 'name', 'Your name', 'name'],
-    ['Student ID', 'studentId', 'Your student ID', 'id'],
-  ]
-  // const registerFormConstructor = document.getElementById('register-form')
-  formConstroctData.reverse().forEach((data) => {
-    const div = document.createElement('div')
-    div.classList.add('mb-3')
-    div.insertAdjacentHTML(
-      'beforeend',
-      `<label class="form-label">${data[0]}</label>`
-    )
-    div.insertAdjacentHTML(
-      'beforeend',
-      `<input type="text" name="${data[1]}" placeholder="${data[2]}" class="form-control" autocomplete="${data[3]}">`
-    )
-    document.getElementById('register-form').prepend(div)
-  })
-</script>
 {{ end }}
 
 <!-- -->
 
 {{ define "script" }}
 <script>
-  function showForm(show) {
-    const hide = show === 'login' ? 'register' : 'login'
-    const h1 = document.getElementById('entry-title')
-    if (show === 'login') {
-      h1.innerHTML = 'Login'
-    } else {
-      h1.innerHTML = 'Register'
-    }
-    document.getElementById(`${hide}-div`).style.display = 'none'
-    document.getElementById(`${hide}-btn`).style.display = 'none'
-    document.getElementById(`${show}-div`).style.display = 'flex'
-    document.getElementById(`${show}-btn`).style.display = 'flex'
+  htmx.on("htmx:responseError", errorHandler);
+  htmx.on("htmx:sendError", errorHandler);
+  function errorHandler(event) {
+    document.getElementById("auth-modal-body").innerHTML =
+      event.detail.xhr.responseText;
   }
-
-  const registerForm = document.getElementById('register-form')
-  registerForm.addEventListener('submit', async (e) => {
-    e.preventDefault()
-    const regM = new bootstrap.Modal(document.getElementById('register-modal'))
-    regM.show() // Should show modal before getting by id
-    document.getElementById('auth-modal-body').innerHTML = 'Loading...' // Show loading message
-    const formData = new FormData(registerForm)
-    const res = await fetch('/register', {
-      method: 'POST',
-      body: formData,
-    })
-    const message = await res.text() // Replace message with response
-    document.getElementById('auth-modal-body').innerHTML = message
-    document.getElementById('auth-modal-footer').style.display = 'none'
-    if (res.status == 200) {
-      document.getElementById('auth-modal-footer').style.display = 'flex' // Show redirect button
-    }
-  })
+  function replaceSpinner() {
+    const spinner = document.getElementById("Spinner");
+    document.getElementById("auth-modal-body").innerHTML = spinner.innerHTML;
+  }
 </script>
 {{ end }}
 
 <!-- -->
 
 {{ define "modal" }}
-<div class="modal fade" id="register-modal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered" id="auth-modal-dialog">
-    <div class="modal-content">
-      <div class="modal-body" id="auth-modal-body"></div>
-      <div class="modal-footer" id="auth-modal-footer" style="display: none">
-        <a type="button" class="btn btn-secondary btn-sm" href="/">Redirect</a>
-      </div>
-    </div>
+<div
+  x-show="modalOpen"
+  x-transition
+  class="absolute h-screen w-screen top-0 left-0 bg-background/30 backdrop-blur-sm"
+  id="register-modal"
+>
+  <div
+    class="fixed inset-0 m-auto flex flex-col items-center justify-center max-w-xl max-h-32 text-black bg-white rounded-md"
+    x-on:click.away="modalOpen = false"
+  >
+    <p
+      id="auth-modal-body"
+      class="inline-flex items-center mb-1"
+      hx-on::after-swap="document.getElementById('auth-modal-footer').style.display = 'flex'"
+    ></p>
+    <a
+      href="/content/"
+      id="auth-modal-footer"
+      style="display: none"
+      class="border border-black rounded-md p-1 hover:bg-slate-200"
+      x-on:click="modalOpen = false"
+      >Redirect</a
+    >
   </div>
 </div>
-<style>
-  .modal-footer {
-    padding: 0.2rem;
-  }
-</style>
 {{ end }}

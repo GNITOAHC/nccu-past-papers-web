@@ -1,0 +1,30 @@
+{{ define "breadcrumb" }}
+<nav aria-label="breadcrumb" class="flex">
+  <ol
+    class="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse"
+  >
+    <!-- prettier-ignore -->
+    {{ $links := .Links }} 
+
+    {{ range $idx, $name := .Names }}
+    <li id="content-breadcrumb">
+      <div class="flex items-center">
+        <svg
+          class="w-4 h-4 text-gray-400"
+          fill="currentColor"
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 20 20"
+        >
+          <path d="M6 10l5-5 5 5H6z" transform="rotate(90 10 10)" />
+        </svg>
+        <a
+          href="{{ index $links $idx }}"
+          class="ml-1 text-sm font-medium text-foreground hover:text-gray-400"
+          >{{ $name }}</a
+        >
+      </div>
+    </li>
+    {{ end }}
+  </ol>
+</nav>
+{{ end }}
