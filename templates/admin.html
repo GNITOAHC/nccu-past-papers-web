@@ -24,6 +24,9 @@
           <td class="text-center pl-8">
             <button type="button" class="" id="approve-btn-{{ $widx }}">Approve</button>
           </td>
+          <td class="text-right pl-8">
+            <button type="button" class="" id="delete-btn-{{ $widx }}">Delete</button>
+          </td>
         </tr>
       {{ end }}
     </tbody>
@@ -60,9 +63,29 @@
     window.alert('user ' + waitingName + ' approved')
     window.location.reload()
   }
+  //delete
+  async function del(idx) {
+    window.alert('Deleting user...')
+    const waitingEmail = document.getElementById(`waiting-list-${idx}-0`).innerText
+    const waitingName = document.getElementById(`waiting-list-${idx}-1`).innerText
+    const waitingStudentId = document.getElementById(`waiting-list-${idx}-2`).innerText
+    const response = await fetch('/admin/delete', { method: 'POST', body: JSON.stringify({ email: waitingEmail, name: waitingName, studentId: waitingStudentId })})
+    if (!response.ok) {
+      console.error('Failed to delete')
+      window.alert('Failed to delete, please check the database manually')
+      return
+    }
+    window.alert('user ' + waitingName + ' deleted')
+    window.location.reload()
+  }
   for (let i = 0; i < {{ len .WaitingList }}; ++i) {
     document.getElementById(`approve-btn-${i}`).onclick = async function () {
       await approve(i)
+    }
+  }
+  for (let i = 0; i < {{ len .WaitingList }}; ++i) {
+    document.getElementById(`delete-btn-${i}`).onclick = async function () {
+      await del(i)
     }
   }
 </script>
