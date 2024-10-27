@@ -36,6 +36,7 @@ func (a *App) RegisterAdminRoutes(prefix string, mux *http.ServeMux) {
 	// mux.HandleFunc(prefix+"/", a.Admin) // For testing process
 	mux.HandleFunc(prefix+"/approve", a.adminProtect(a.loginProtect(a.ApproveRegistration)))
 	// mux.HandleFunc(prefix+"/approve", a.ApproveRegistration) // For testing process
+	mux.HandleFunc(prefix+"/delete", a.adminProtect(a.loginProtect(a.DeleteRegistration)))
 	return
 }
 
@@ -73,6 +74,28 @@ func (a *App) ApproveRegistration(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = a.helper.ApproveRegistration(data["email"], data["name"], data["studentId"])
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	return
+}
+
+func (a *App) DeleteRegistration(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var data map[string]string
+	err := json.NewDecoder(r.Body).Decode(&data)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = a.helper.DeleteRegistration(data["email"], data["name"], data["studentId"])
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
