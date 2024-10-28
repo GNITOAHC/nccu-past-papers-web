@@ -20,20 +20,26 @@ type Config struct {
 }
 
 func NewConfig(envpaths ...string) *Config {
-	err := dotenv.Load(envpaths...)
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+	_ = dotenv.Load(envpaths...)
 
 	return &Config{
-		GitHubAccessToken: os.Getenv("GITHUB_ACCESS_TOKEN"),
-		RepoAPI:           os.Getenv("REPO_API"),
-		GASAPI:            os.Getenv("GAS_API"),
-		SMTPFrom:          os.Getenv("SMTP_FROM"),
-		SMTPPass:          os.Getenv("SMTP_PASS"),
-		SMTPHost:          os.Getenv("SMTP_HOST"),
-		SMTPPort:          os.Getenv("SMTP_PORT"),
-		GEMINI_API_KEY:    os.Getenv("GEMINI_API_KEY"),
-		ADMIN_MAIL:        os.Getenv("ADMIN_MAIL"),
+		GitHubAccessToken: readEnvOrPanic("GITHUB_ACCESS_TOKEN"),
+		RepoAPI:           readEnvOrPanic("REPO_API"),
+		GASAPI:            readEnvOrPanic("GAS_API"),
+		SMTPFrom:          readEnvOrPanic("SMTP_FROM"),
+		SMTPPass:          readEnvOrPanic("SMTP_PASS"),
+		SMTPHost:          readEnvOrPanic("SMTP_HOST"),
+		SMTPPort:          readEnvOrPanic("SMTP_PORT"),
+		GEMINI_API_KEY:    readEnvOrPanic("GEMINI_API_KEY"),
+		ADMIN_MAIL:        readEnvOrPanic("ADMIN_MAIL"),
 	}
+
+}
+
+func readEnvOrPanic(key string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		log.Panicf("Environment variable %s is not set", key)
+	}
+	return value
 }
