@@ -1,4 +1,4 @@
-FROM golang:1.22-alpine3.19 as build
+FROM golang:1.22-alpine3.19 AS build
 
 WORKDIR /usr/src
 
@@ -12,6 +12,7 @@ RUN go build -o /app /usr/src/cmd/app/main.go
 
 
 FROM alpine:3.19
-COPY --from=build /app /app
+COPY . .
+COPY --from=build /app /cmd/app/exec
 EXPOSE 3000
-CMD ["/app"]
+CMD ["/cmd/app/exec"]
