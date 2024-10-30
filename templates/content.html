@@ -69,8 +69,11 @@
     Drag and drop files here
   </div>
 
+  {{ template "upload-modal" }}
+
 </form>
-{{ template "upload-script" }} {{ template "upload-modal" }}
+{{ template "upload-script" }} 
+
 <!-- -->
 
 <!-- -->
@@ -113,21 +116,21 @@
 
   uploadForm.addEventListener("submit", async (e) => {
     e.preventDefault();
-    alert("submit");
+    //alert("submit");
     const uploadM = new bootstrap.Modal(
       document.getElementById("upload-modal")
     );
     uploadM.show();
-    alert("show");
+    //alert("show");
     document.getElementById("upload-modal-body").innerHTML = "Loading...";
-    const formData = new FormData(uploadForm); // 取得數據
-    // alert(formData);
+    const formData = new FormData(uploadForm);
     const res = await fetch(window.location.href, {
-      method: "POST",
-      body: formData,
+     method: "POST",
+     body: formData,
     });
     const message = await res.text();
-    document.getElementById("upload-modal-body").innerHTML = message;
+    alert(message);
+    document.getElementById("upload-modal-body").innerHTML = "";
   });
 </script>
 {{ end }}
