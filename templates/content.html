@@ -65,7 +65,8 @@
   <input type="file" name="file" placeholder="File Input" />
   <button type="submit">Add</button>
   <!-- Add files drag and drop feature -->
-  <div id="drop-zone" class="border border-dashed border-gray-400 p-4 mt-2">
+   <!-- border border-dashed border-gray-400 p-4 mt-2  -->
+  <div id="drop-zone" class="border border-dashed border-gray-400 p-8 mt-4 h-40 w-full">
     Drag and drop files here
   </div>
 
@@ -84,6 +85,10 @@
 
   const dropZone = document.getElementById("drop-zone");
   const fileInput = uploadForm.querySelector('input[type="file"]');
+
+  dropZone.addEventListener('click', () => {
+    fileInput.click();
+  });
 
   // Prevent default drag behaviors
   ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
@@ -146,3 +151,10 @@
   </div>
 </div>
 {{ end }}
+
+<style>
+  .highlight {
+    border-color: blue;
+    background-color: rgba(0, 0, 255, 0.1);
+  }
+</style>
