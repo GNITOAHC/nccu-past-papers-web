@@ -1,3 +1,7 @@
+<!-- Add Bootstrap JavaScript and Popper.js -->
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 {{ if .HasReadme }}
 <div class="border-foreground border rounded-md p-4 mb-2">
   <p class="markdown">{{ .Readme }}</p>
@@ -71,12 +75,15 @@
   const uploadForm = document.getElementById("upload-form");
   uploadForm.addEventListener("submit", async (e) => {
     e.preventDefault();
+    alert("submit");
     const uploadM = new bootstrap.Modal(
       document.getElementById("upload-modal")
     );
     uploadM.show();
+    alert("show");
     document.getElementById("upload-modal-body").innerHTML = "Loading...";
-    const formData = new FormData(uploadForm);
+    const formData = new FormData(uploadForm); // 取得數據
+    // alert(formData);
     const res = await fetch(window.location.href, {
       method: "POST",
       body: formData,
