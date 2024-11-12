@@ -28,15 +28,15 @@
   {{ $currentLink := "/" }}
 
   {{ range $idx, $part := $parts }}
-  {{  if ne $part "" }}
-  {{    $currentLink = print $currentLink $part "/" }}
-  {{      if $currentLink | eq "/content/" }}
-  {{        $names = append $names "HOME" }}
-  {{      else }}
-  {{        $names = append $names $part }}
-  {{      end }}
-  {{    $links = append $links $currentLink }}
-  {{  end }}
+  {{ if ne $part "" }}
+  {{ $currentLink = print $currentLink $part "/" }}
+  {{ if $currentLink | eq "/content/" }}
+  {{ $names = append $names "HOME" }}
+  {{ else }}
+  {{ $names = append $names $part }}
+  {{ end }}
+  {{ $links = append $links $currentLink }}
+  {{ end }}
   {{ end }}
 
   {{ template "breadcrumb" (dict "Names" $names "Links" $links) }}
@@ -44,36 +44,42 @@
 
 <!-- -->
 
-<ul
-  class="border divide-y divide-border border-border rounded-lg first-of-type:rounded-t-lg mb-4"
->
+<ul class="border divide-y divide-border border-border rounded-lg first-of-type:rounded-t-lg mb-4">
   <!-- prettier-ignore -->
   {{ range .Items }}
-  {{  if .IsTree }}
+  {{ if .IsTree }}
   <li class="w-full px-4 py-2">
     <a href="{{ .Link }}">{{ .Name }}</a>
   </li>
   <!-- prettier-ignore -->
-  {{  else }}
-  {{    $btnc := "w-full px-4 py-2" }}
-  {{    template "dropdown" (dict "Menu" (dict "Chat" .Link "Download" .Download) "IsLink" true "Title" .Name "TitleId" .Name "ButtonClass" $btnc) }}
+  {{ else }}
+  {{ $btnc := "w-full px-4 py-2" }}
+  {{ template "dropdown" (dict "Menu" (dict "Chat" .Link "Download" .Download) "IsLink" true "Title" .Name "TitleId"
+  .Name "ButtonClass" $btnc) }}
   {{ end }} {{ end }}
 </ul>
 
 <form id="upload-form" class="h-20" enctype="multipart/form-data">
-  <input type="text" name="name" placeholder="Name" />
-  <input type="file" name="file" placeholder="File Input" />
-  <button type="submit">Add</button>
-  <!-- Add files drag and drop feature -->
-   <!-- border border-dashed border-gray-400 p-4 mt-2  -->
-  <div id="drop-zone" class="border border-dashed border-gray-400 p-8 mt-4 h-40 w-full">
-    Drag and drop files here !!!
+  <input type="file" name="file" placeholder="File Input" style="display: none"/>
+
+  <!-- File drag and drop area -->
+  <div id="drop-zone" class="border border-dashed border-gray-400 p-8 mt-4 h-40 w-full cursor-pointer flex justify-center items-center text-center" style="text-align: center;">
+    <span id="drop-zone-text">
+      Drag and drop files or click to choose files<br>
+      PDF files only (maximum size: 8MB)
+    </span>
+  </div>
+
+  <!-- The file you choose and the submit button -->
+  <div class="flex items-center space-x-2">
+    <div id="file-name"></div>
+    <button type="submit" class="bg-[#39bff8] border-none text-white py-1 px-4 text-center font-medium text-lg m-1 cursor-pointer hidden hover:bg-[#0056b3] active:bg-[#004085]" id="add-button">Add</button>
   </div>
 
   {{ template "upload-modal" }}
 
 </form>
-{{ template "upload-script" }} 
+{{ template "upload-script" }}
 
 <!-- -->
 
@@ -82,12 +88,38 @@
 {{ define "upload-script" }}
 <script>
   const uploadForm = document.getElementById("upload-form");
-
   const dropZone = document.getElementById("drop-zone");
   const fileInput = uploadForm.querySelector('input[type="file"]');
+  const fileNameDisplay = document.getElementById("file-name");
+  const addButton = document.getElementById("add-button");
+
+  // if the user has already selected a file, show the add button
+  function toggleAddButton() {
+    addButton.style.display = fileNameDisplay.textContent !== "" ? "inline-block" : "none";
+  }
 
   dropZone.addEventListener('click', () => {
     fileInput.click();
+    console.log("here!!!");
+  });
+
+  // after clicking the file in the popup folder, check if the file is a PDF and within the size limit, 
+  // then show the file name and the add button
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files[0];
+    if (file) {
+      if (file.type !== "application/pdf") {
+        alert("Only PDF files are allowed.");
+        return;
+      }
+      if (file.size > 8 * 1024 * 1024) { // 8MB in bytes
+        alert("File size exceeds 8MB.");
+        return;
+      }
+      fileNameDisplay.textContent = file.name; // Display file name
+      console.log("click current file is : " + file.name);
+      toggleAddButton();
+    }
   });
 
   // Prevent default drag behaviors
@@ -103,11 +135,16 @@
 
   // Highlight drop area when item is dragged over it
   ['dragenter', 'dragover'].forEach(eventName => {
-    dropZone.addEventListener(eventName, () => dropZone.classList.add('highlight'), false);
+    dropZone.addEventListener(eventName, () => {
+      dropZone.classList.add('border-blue-500', 'bg-blue-100');
+    }, false);
   });
 
+  // Remove drop highlight
   ['dragleave', 'drop'].forEach(eventName => {
-    dropZone.addEventListener(eventName, () => dropZone.classList.remove('highlight'), false);
+    dropZone.addEventListener(eventName, () => {
+      dropZone.classList.remove('border-blue-500', 'bg-blue-100'); 
+    }, false);
   });
 
   // Handle dropped files
@@ -116,26 +153,48 @@
   function handleDrop(e) {
     const dt = e.dataTransfer;
     const files = dt.files;
-    fileInput.files = files;
+
+    // Check if the file is a PDF and within the size limit
+    const file = files[0];
+    if (file) {
+      if (file.type !== "application/pdf") {
+        alert("Only PDF files are allowed.");
+        return;
+      }
+      if (file.size > 8 * 1024 * 1024) { // 8MB in bytes
+        alert("File size exceeds 8MB.");
+        return;
+      }
+      
+      fileInput.files = files;
+      fileNameDisplay.textContent = file.name; // Display file name
+      console.log("drop current file is : " + file.name);
+      toggleAddButton();
+    }
   }
 
+  // after the Add button is clicked, show the modal and send the file to the server
   uploadForm.addEventListener("submit", async (e) => {
     e.preventDefault();
-    //alert("submit");
+
     const uploadM = new bootstrap.Modal(
       document.getElementById("upload-modal")
     );
     uploadM.show();
-    //alert("show");
+
     document.getElementById("upload-modal-body").innerHTML = "Loading...";
+    
     const formData = new FormData(uploadForm);
     const res = await fetch(window.location.href, {
-     method: "POST",
-     body: formData,
+      method: "POST",
+      body: formData,
     });
     const message = await res.text();
     alert(message);
     document.getElementById("upload-modal-body").innerHTML = "";
+    fileInput.value = "";
+    fileNameDisplay.textContent = "";
+    toggleAddButton();
   });
 </script>
 {{ end }}
@@ -151,10 +210,3 @@
   </div>
 </div>
 {{ end }}
-
-<style>
-  .highlight {
-    border-color: blue;
-    background-color: rgba(0, 0, 255, 0.1);
-  }
-</style>
