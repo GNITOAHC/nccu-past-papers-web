@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>OTP Verification</title>
+</head>
+<body>
+    <form action="/verify-otp" method="POST">
+        <label for="otp">Enter OTP:</label>
+        <input type="text" id="otp" name="otp" required>
+        <input type="hidden" name="email" value="{{.Email}}">
+        <button type="submit">Verify</button>
+    </form>
+</body>
+</html>
