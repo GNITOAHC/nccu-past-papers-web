@@ -1,7 +1,7 @@
 <div style="padding-left: 6rem; padding-right: 6rem; padding-top: 15%">
   <div x-data="{ login: true, showspinner: false }">
-    <h1 class="mb-4 flex justify-center" x-show="login">Login</h1>
-    <h1 class="mb-4 flex justify-center" x-show="!login">Register</h1>
+    <h1 class="mb-4 flex justify-center text-4xl" x-show="login">Login</h1>
+    <h1 class="mb-4 flex justify-center text-4xl" x-show="!login">Register</h1>
     <!-- prettier-ignore -->
     {{ template "login-form" }} {{ template "register-form" }}
     {{ template "spinner" (dict "Id" "Spinner" "ShowName" "showspinner") }}
@@ -25,8 +25,12 @@
       name="email"
       placeholder="example@example.com"
       autocomplete="email"
+      class="w-full max-w-md p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
     />
-    <button type="submit" class="hidden md:block">Login</button>
+    <button 
+      type="submit" 
+      class="hidden md:block px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 active:scale-95 transition-all"
+    >Login</button>
     <button type="submit" class="md:hidden">&gt;</button>
   </form>
   <div class="place-content-end">
@@ -59,7 +63,7 @@
         type="text"
         name="{{ index $name $i }}"
         placeholder="{{ index $placeholder $i }}"
-        class="form-control"
+        class="form-control w-full max-w-md p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         autocomplete="{{ index $autocomplete $i }}"
       />
     </div>
@@ -72,6 +76,7 @@
       hx-target="#auth-modal-body"
       hx-on::before-request="replaceSpinner()"
       hx-swap="innerHTML"
+      class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 active:scale-95 transition-all"
     >
       Register
     </button>
