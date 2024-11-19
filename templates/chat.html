@@ -1,168 +1,150 @@
 {{ define "body" }}
-<div class="d-flex w-100 vh-100">
+<div class="flex w-full h-full">
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
-  <div class="h-100 file-section-cls" id="iframe-div">
-    <!-- <p>{{ .Src }}</p> -->
-    <iframe src="{{ .Src }}" class="w-100"></iframe>
-    <!-- <div class="h-100 bg-white"></div> -->
+  <div class="h-full w-2/3 file-section-cls" id="iframe-div">
+    <iframe src="{{ .Src }}" class="w-full"></iframe>
   </div>
-  <div class="h-100 overflow-scroll chat-section-cls">
-    <div class="d-flex flex-column">
-      <div id="chat-box" class="flex-grow-1"></div>
-      <div class="form-floating">
-        <textarea class="form-control" type="text" id="chat-input"></textarea>
-        <label for="chat-input">問題：</label>
-      </div>
+
+  <div class="h-full max-h-screen overflow-y-scroll w-1/3 overflow-scroll" x-data="{chatname: getChatName()}">
+    <div id="chat-box" class="flex flex-col gap-2 p-4 bg-gray-100 rounded-lg shadow-inner overflow-y-auto">
     </div>
+
+    <form
+      class="flex items-center p-2 bg-white border-t border-gray-200"
+      id="chat-form"
+      x-data="{
+        chathis: JSON.parse(localStorage.getItem(chatname) || '[]'),
+        message: '',
+        submitMessage() {
+          if (this.message.trim() !== '') {
+            this.chathis.push({role: 'user', text: this.message});
+            this.chathis.push({role: 'model', text: 'Loading...'});
+            this.message = '';
+            chatComplete(this.chathis);
+          }
+        },
+      }"
+      x-init="
+        $watch('chathis', value => {
+          localStorage.setItem(chatname, JSON.stringify(value));
+          renderChat(value);
+        });
+      "
+    >
+      <!-- Container for input and button -->
+      <textarea
+        id="chat-input"
+        class="flex-grow w-full rounded-md p-2 text-sm border-gray-300 shadow-sm resize-none"
+        placeholder="Type a message..."
+        @keydown.enter.prevent="!$event.shiftKey && submitMessage()"
+        @keydown.shift.enter="message += '\n'"
+        x-model="message"
+      ></textarea>
+
+      <!-- Send Button -->
+      <button
+        type="button"
+        @click="submitMessage()"
+        class="bg-blue-500 text-white py-2 px-4 ml-2 rounded-md shadow-md hover:bg-blue-600 transition"
+      >
+        Send
+      </button>
+    </form>
+
+    <p id="output" class="hidden">Init</p>
+
+    <script>
+      async function chatComplete(chathis) {
+        renderChat(chathis);
+        const response = await fetch(window.location.href, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(chathis),
+        });
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder("utf-8");
+
+        let done, value;
+        let modelText = "";
+        while (({ done, value } = await reader.read())) {
+          const text = decoder.decode(value, { stream: !done });
+          if (done) break;
+          modelText += text;
+          document.getElementById("output").textContent += text;
+        }
+        if (modelText.trim()) {
+          chathis[chathis.length - 1] = { role: "model", text: modelText };
+        }
+      }
+
+      function renderChat(chathis) {
+        const chatBox = document.getElementById("chat-box");
+        chatBox.innerHTML = "";
+        chathis.forEach((obj) => {
+          const d = document.createElement("div");
+          d.textContent = obj.text;
+          d.style.whiteSpace = "pre-wrap";
+          d.classList.add("markdown");
+
+          // Chat bubble styling
+          if (obj.role === "user") {
+            d.classList.add("bg-blue-100", "text-blue-900", "p-2", "rounded-lg", "self-end", "max-w-xs", "shadow");
+          } else {
+            d.classList.add("bg-gray-200", "text-gray-800", "p-2", "rounded-lg", "self-start", "max-w-xs", "shadow");
+          }
+          chatBox.appendChild(d);
+        });
+        toMarkdown();
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }
+    </script>
   </div>
 
-  <style>
-    .file-section-cls {
-      width: 65%;
-      @media screen and (max-width: 768px) {
-        width: 100%;
-      }
-    }
-    .chat-section-cls {
-      width: 35%;
-      @media screen and (max-width: 768px) {
-        display: none;
-      }
-    }
-  </style>
-  {{ template "chat-script" }} {{ template "iframe-resize-script" }}
+  {{ template "chat-script" }} 
+  {{ template "iframe-resize-script" }}
 </div>
-{{ end }}
-
-<!-- -->
 
 {{ define "chat-script" }}
 <script>
   function getFilePath() {
-    // Get the current path from the URL
-    const path = window.location.pathname
-    const chatpath = path.substring(path.indexOf('/chat/') + 6)
-    return chatpath
+    const path = window.location.pathname;
+    const chatpath = path.substring(path.indexOf("/chat/") + 6);
+    return chatpath;
   }
 
   function getFileName() {
-    const fp = getFilePath()
-    return fp.replace(/\//g, '_')
+    const fp = getFilePath();
+    return fp.replace(/\//g, "_");
   }
 
   function getChatName() {
-    const fn = getFileName()
-    return 'chatppw_' + fn
-  }
-
-  function getChat() {
-    // Load from local storage
-    let chat = localStorage.getItem(getChatName())
-    if (chat === null) {
-      chat = []
-    }
-    try {
-      chat = JSON.parse(chat)
-    } catch (e) {
-      chat = []
-    }
-    localStorage.setItem(getChatName(), JSON.stringify(chat))
-    return chat
-  }
-
-  function renderChat() {
-    const chatBox = document.getElementById('chat-box')
-    const chat = getChat()
-    chatBox.innerHTML = ''
-    chat.forEach((obj) => {
-      const d = document.createElement('div')
-      d.textContent = obj.text
-      d.style.whiteSpace = 'pre-wrap'
-      d.classList.add('markdown')
-      chatBox.appendChild(d)
-    })
-  }
-
-  async function completeChat(chathis, mes) {
-    const fp = getFilePath()
-    const fn = getFileName()
-    const res = await fetch('/chatep', {
-      method: 'POST',
-      body: JSON.stringify({
-        content: chathis,
-        filepath: fp,
-        filename: fn,
-        message: mes,
-      }),
-    })
-    if (!res.ok) {
-      console.log(await res.text())
-      return 'Error! Please try again later or contact the administrator.'
-    }
-    return await res.text()
+    const fn = getFileName();
+    return "chatppw_" + fn;
   }
 
   function toMarkdown() {
-    const paragraphs = document.querySelectorAll('div.markdown')
-    // Loop through each <p> tag and convert the Markdown content to HTML
+    const paragraphs = document.querySelectorAll("div.markdown");
     paragraphs.forEach((p) => {
-      const markdown = p.innerText // Get the markdown content
-      const html = marked.parse(markdown) // Convert markdown to HTML using Marked.js
-      p.innerHTML = html // Replace <p> content with rendered HTML
-      console.log(html)
-    })
-  }
-
-  document
-    .getElementById('chat-input')
-    .addEventListener('keypress', async function (e) {
-      if (e.which === 13 && !e.shiftKey) {
-        const chat = getChat()
-        const cn = getChatName()
-        const prmpt = e.target.value
-        e.target.value = ''
-        const res = await completeChat(chat, prmpt)
-        chat.push({ role: 'user', text: prmpt })
-        localStorage.setItem(cn, JSON.stringify(chat))
-        renderChat()
-        // Render response here
-        console.log(res)
-        chat.push({ role: 'model', text: res })
-        localStorage.setItem(cn, JSON.stringify(chat))
-        renderChat()
-        toMarkdown()
-        return
-      }
-    })
-
-  window.onload = function () {
-    renderChat()
-    toMarkdown()
+      const markdown = p.innerText;
+      const html = marked.parse(markdown);
+      p.innerHTML = html;
+    });
   }
 </script>
 {{ end }}
 
-<!-- -->
-
 {{ define "iframe-resize-script" }}
 <script>
   function resizeIframe() {
-    var iframe = document
-      .getElementById('iframe-div')
-      .getElementsByTagName('iframe')[0]
-    var height = document.getElementById('iframe-div').offsetHeight
-    iframe.style.height = height - 5 + 'px'
-    console.log('Resized')
+    var iframe = document.getElementById("iframe-div").getElementsByTagName("iframe")[0];
+    var height = document.getElementById("iframe-div").offsetHeight;
+    iframe.style.height = height - 5 + "px";
   }
 
-  // Resize when iframe is loaded
-  document
-    .getElementById('iframe-div')
-    .getElementsByTagName('iframe')[0]
-    .addEventListener('load', resizeIframe)
-
-  // Resize on window resize
-  window.addEventListener('resize', resizeIframe)
+  document.getElementById("iframe-div").getElementsByTagName("iframe")[0].addEventListener("load", resizeIframe);
+  window.addEventListener("resize", resizeIframe);
 </script>
 {{ end }}
