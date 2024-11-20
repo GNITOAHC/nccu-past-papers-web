@@ -1,22 +1,23 @@
+{{ define "body" }}
 <div class="flex w-full h-full">
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
+  <!-- Iframe Section -->
   <div class="h-full w-2/3 file-section-cls" id="iframe-div">
     <iframe src="{{ .Src }}" class="w-full"></iframe>
-    <!-- <p>{{ .Src }}</p> -->
   </div>
 
+  <!-- Chat Section -->
   <div class="h-full max-h-screen overflow-y-scroll w-1/3 overflow-scroll" x-data="{chatname: getChatName()}">
-    <div id="chat-box" class="flex-grow"></div>
+    <div id="chat-box" class="flex flex-col gap-2 p-4 bg-gray-100 rounded-lg shadow-inner overflow-y-auto"></div>
 
     <form
-      class="flex flex-col"
+      class="flex items-center p-2 bg-white border-t border-gray-200"
       id="chat-form"
       x-data="{
         chathis: JSON.parse(localStorage.getItem(chatname) || '[]'),
         message: '',
         submitMessage() {
-          document.getElementById('chat-input').value = '';
           if (this.message.trim() !== '') {
             this.chathis.push({role: 'user', text: this.message});
             this.chathis.push({role: 'model', text: 'Loading...'});
@@ -32,61 +33,32 @@
         });
       "
     >
-      <div class="col-span-full">
-        <label for="chat-input">Message:</label>
-        <textarea
-          class="w-full min-h-28 rounded-md border-0 p-1.5 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 sm:text-sm sm:leading-6"
-          placeholder="問題"
-          type="text"
-          @keydown.enter.prevent="!$event.shiftKey && submitMessage()"
-          @keydown.shift.enter="message += '\n'"
-          x-model="message"
-          id="chat-input"
-        ></textarea>
-      </div>
+      <textarea
+        id="chat-input"
+        class="flex-grow w-full rounded-md p-2 text-sm border-gray-300 shadow-sm resize-none"
+        placeholder="Type a message..."
+        @keydown.enter.prevent="!$event.shiftKey && submitMessage()"
+        @keydown.shift.enter="message += '\n'"
+        x-model="message"
+      ></textarea>
+
+      <button
+        type="button"
+        @click="submitMessage()"
+        class="bg-blue-500 text-white py-2 px-4 ml-2 rounded-md shadow-md hover:bg-blue-600 transition"
+      >
+        Send
+      </button>
     </form>
 
-    <p id="output">Init</p>
-
-    <script>
-      async function chatComplete(chathis) {
-        renderChat(chathis);
-        const response = await fetch(window.location.href, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(chathis),
-        });
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder("utf-8");
-
-        let done, value;
-        let modelText = "";
-        while (({ done, value } = await reader.read())) {
-          const text = decoder.decode(value, { stream: !done });
-          if (done) break;
-          modelText += text;
-          document.getElementById("output").textContent += text; // Append the streamed text to the output
-        }
-        console.log(chathis);
-        if (modelText.trim()) {
-          chathis[chathis.length - 1] = { role: "model", text: modelText };
-        }
-        console.log(chathis);
-      }
-    </script>
+    <p id="output" class="hidden">Init</p>
   </div>
-
-  {{ template "chat-script" }} {{ template "iframe-resize-script" }}
 </div>
-
-<!-- -->
+{{ end }}
 
 {{ define "chat-script" }}
 <script>
   function getFilePath() {
-    // Get the current path from the URL
     const path = window.location.pathname;
     const chatpath = path.substring(path.indexOf("/chat/") + 6);
     return chatpath;
@@ -104,12 +76,10 @@
 
   function toMarkdown() {
     const paragraphs = document.querySelectorAll("div.markdown");
-    // Loop through each p tag and convert the Markdown content to HTML
     paragraphs.forEach((p) => {
-      const markdown = p.innerText; // Get the markdown content
-      const html = marked.parse(markdown); // Convert markdown to HTML using Marked.js
-      p.innerHTML = html; // Replace p tag content with rendered HTML
-      console.log(html);
+      const markdown = p.innerText;
+      const html = marked.parse(markdown);
+      p.innerHTML = html;
     });
   }
 
@@ -121,48 +91,41 @@
       d.textContent = obj.text;
       d.style.whiteSpace = "pre-wrap";
       d.classList.add("markdown");
+
+      if (obj.role === "user") {
+        d.classList.add("bg-blue-100", "text-blue-900", "p-2", "rounded-lg", "self-end", "max-w-xs", "shadow");
+      } else {
+        d.classList.add("bg-gray-200", "text-gray-800", "p-2", "rounded-lg", "self-start", "max-w-xs", "shadow");
+      }
       chatBox.appendChild(d);
     });
     toMarkdown();
+    chatBox.scrollTop = chatBox.scrollHeight;
   }
 
   window.onload = function () {
     let chat = localStorage.getItem(getChatName());
-    if (chat === null) {
-      chat = [];
-    }
+    if (!chat) chat = [];
     try {
       chat = JSON.parse(chat);
     } catch (e) {
       chat = [];
     }
     localStorage.setItem(getChatName(), JSON.stringify(chat));
-
     renderChat(chat);
   };
 </script>
 {{ end }}
 
-<!-- -->
-
 {{ define "iframe-resize-script" }}
 <script>
   function resizeIframe() {
-    var iframe = document
-      .getElementById("iframe-div")
-      .getElementsByTagName("iframe")[0];
-    var height = document.getElementById("iframe-div").offsetHeight;
-    iframe.style.height = height - 5 + "px";
-    console.log("Resized");
+    const iframe = document.getElementById("iframe-div").getElementsByTagName("iframe")[0];
+    const height = document.getElementById("iframe-div").offsetHeight;
+    iframe.style.height = `${height - 5}px`;
   }
 
-  // Resize when iframe is loaded
-  document
-    .getElementById("iframe-div")
-    .getElementsByTagName("iframe")[0]
-    .addEventListener("load", resizeIframe);
-
-  // Resize on window resize
+  document.getElementById("iframe-div").getElementsByTagName("iframe")[0].addEventListener("load", resizeIframe);
   window.addEventListener("resize", resizeIframe);
 </script>
 {{ end }}
