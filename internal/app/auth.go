@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"html/template"
 	"net/http"
+	"past-papers-web/templates"
 	"strings"
 	"time"
 )
@@ -60,13 +61,6 @@ func (a *App) Register(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) Login(w http.ResponseWriter, r *http.Request) {
-	renderTmpl := func() {
-		tmpl := template.Must(template.ParseFiles("templates/base.html", "templates/entry.html"))
-		if err := tmpl.Execute(w, nil); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	}
 	if r.Method == "POST" {
 		email := r.FormValue("email")
 		http.SetCookie(w, &http.Cookie{ // Set a cookie
@@ -87,9 +81,9 @@ func (a *App) Login(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		renderTmpl()
+		templates.Render(w, "entry.html", nil)
 		return
 	}
-	renderTmpl()
+	templates.Render(w, "entry.html", nil)
 	return
 }

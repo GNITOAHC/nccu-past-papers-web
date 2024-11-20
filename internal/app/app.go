@@ -12,6 +12,7 @@ import (
 	"past-papers-web/internal/config"
 	"past-papers-web/internal/helper"
 	"past-papers-web/mailer"
+	"past-papers-web/templates"
 )
 
 var (
@@ -35,6 +36,8 @@ func StartServer() {
 	}
 
 	app := NewApp()
+
+	templates.NewTemplates()
 
 	err = http.Serve(lis, app.Routes())
 	if err != nil {
@@ -61,6 +64,9 @@ func NewApp() *App {
 func (a *App) Routes() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", a.Login)
+	mux.HandleFunc("/static/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, r.URL.Path[1:])
+	})
 	a.RegisterAdminRoutes("/admin", mux)
 	mux.HandleFunc("/refresh-tree", a.RefreshTree)
 	mux.HandleFunc("/register", a.Register)

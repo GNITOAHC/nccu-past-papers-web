@@ -1,54 +1,60 @@
-{{ define "body" }}
-<nav aria-label="breadcrumb">
-  <ol class="breadcrumb" id="content-breadcrumb"></ol>
-</nav>
-<script>
-  const path = '{{ .Path }}'
-  const pathArray = path.split('/')
-  console.log(pathArray)
-  const contentBreadcrumb = document.getElementById('content-breadcrumb')
-  pathArray.forEach((item, index) => {
-    const link = pathArray.slice(0, index + 1).join('/')
-    const li = document.createElement('li')
-    li.classList.add('breadcrumb-item')
-    li.insertAdjacentHTML('beforeend', `<a href="${'/' + link}">${item}</a>`)
-    contentBreadcrumb.append(li)
-  })
-  contentBreadcrumb.firstElementChild.innerHTML = `<a href="${'/content'}">HOME</a>`
-  contentBreadcrumb.lastElementChild.innerHTML =
-    pathArray.length === 1 ? 'HOME' : pathArray.slice(-1)
-</script>
-<ul class="list-group my-3">
-  {{ range .Items }} {{ if .IsTree }}
-  <li class="list-group-item">
-    <a href="{{ .Link }}" class="text-decoration-none">{{ .Name }}</a>
+{{ if .HasReadme }}
+<div class="border-foreground border rounded-md p-4 mb-2">
+  <p class="markdown">{{ .Readme }}</p>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script>
+    window.onload = () => {
+      const readme = document.querySelector(".markdown");
+      readme.innerHTML = marked.parse(readme.innerHTML);
+    };
+  </script>
+</div>
+{{ end }}
+
+<div class="my-4">
+  <!-- prettier-ignore -->
+  {{ $path := .Path }} {{ $parts := split .Path "/" }}
+
+  <!-- Initialize empty arrays for Names and Links -->
+  <!-- prettier-ignore -->
+  {{ $names := slice }} {{ $links := slice }}
+
+  <!-- Create links and names from the path -->
+  <!-- prettier-ignore -->
+  {{ $currentLink := "/" }}
+
+  {{ range $idx, $part := $parts }}
+  {{  if ne $part "" }}
+  {{    $currentLink = print $currentLink $part "/" }}
+  {{      if $currentLink | eq "/content/" }}
+  {{        $names = append $names "HOME" }}
+  {{      else }}
+  {{        $names = append $names $part }}
+  {{      end }}
+  {{    $links = append $links $currentLink }}
+  {{  end }}
+  {{ end }}
+
+  {{ template "breadcrumb" (dict "Names" $names "Links" $links) }}
+</div>
+
+<!-- -->
+
+<ul
+  class="border divide-y divide-border border-border rounded-lg first-of-type:rounded-t-lg mb-4"
+>
+  <!-- prettier-ignore -->
+  {{ range .Items }}
+  {{  if .IsTree }}
+  <li class="w-full px-4 py-2">
+    <a href="{{ .Link }}">{{ .Name }}</a>
   </li>
-  {{ else }}
-  <li class="list-group-item with-chat-option">
-    <span
-      class="text-decoration-underline text-primary-emphasis"
-      type="button"
-      data-bs-toggle="dropdown"
-      aria-expanded="false"
-    >
-      {{ .Name }}
-    </span>
-    <ul class="dropdown-menu">
-      <li><a class="dropdown-item chat-option" href="{{ .Link }}">Chat</a></li>
-      <li><a class="dropdown-item" href="{{ .Download }}">Download</a></li>
-    </ul>
-  </li>
+  <!-- prettier-ignore -->
+  {{  else }}
+  {{    $btnc := "w-full px-4 py-2" }}
+  {{    template "dropdown" (dict "Menu" (dict "Chat" .Link "Download" .Download) "IsLink" true "Title" .Name "TitleId" .Name "ButtonClass" $btnc) }}
   {{ end }} {{ end }}
 </ul>
-
-<style>
-  .chat-option {
-    display: none;
-    @media screen and (min-width: 768px) {
-      display: block;
-    }
-  }
-</style>
 
 <form id="upload-form" class="h-20" enctype="multipart/form-data">
   <input type="text" name="name" placeholder="Name" />
@@ -57,26 +63,27 @@
 </form>
 {{ template "upload-script" }} {{ template "upload-modal" }}
 <!-- -->
-{{ end }}
 
 <!-- -->
 
 {{ define "upload-script" }}
 <script>
-  const uploadForm = document.getElementById('upload-form')
-  uploadForm.addEventListener('submit', async (e) => {
-    e.preventDefault()
-    const uploadM = new bootstrap.Modal(document.getElementById('upload-modal'))
-    uploadM.show()
-    document.getElementById('upload-modal-body').innerHTML = 'Loading...'
-    const formData = new FormData(uploadForm)
+  const uploadForm = document.getElementById("upload-form");
+  uploadForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const uploadM = new bootstrap.Modal(
+      document.getElementById("upload-modal")
+    );
+    uploadM.show();
+    document.getElementById("upload-modal-body").innerHTML = "Loading...";
+    const formData = new FormData(uploadForm);
     const res = await fetch(window.location.href, {
-      method: 'POST',
+      method: "POST",
       body: formData,
-    })
-    const message = await res.text()
-    document.getElementById('upload-modal-body').innerHTML = message
-  })
+    });
+    const message = await res.text();
+    document.getElementById("upload-modal-body").innerHTML = message;
+  });
 </script>
 {{ end }}
 

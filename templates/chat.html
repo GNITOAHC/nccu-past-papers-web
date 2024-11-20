@@ -2,13 +2,14 @@
 <div class="flex w-full h-full">
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
+  <!-- Iframe Section -->
   <div class="h-full w-2/3 file-section-cls" id="iframe-div">
     <iframe src="{{ .Src }}" class="w-full"></iframe>
   </div>
 
+  <!-- Chat Section -->
   <div class="h-full max-h-screen overflow-y-scroll w-1/3 overflow-scroll" x-data="{chatname: getChatName()}">
-    <div id="chat-box" class="flex flex-col gap-2 p-4 bg-gray-100 rounded-lg shadow-inner overflow-y-auto">
-    </div>
+    <div id="chat-box" class="flex flex-col gap-2 p-4 bg-gray-100 rounded-lg shadow-inner overflow-y-auto"></div>
 
     <form
       class="flex items-center p-2 bg-white border-t border-gray-200"
@@ -32,7 +33,6 @@
         });
       "
     >
-      <!-- Container for input and button -->
       <textarea
         id="chat-input"
         class="flex-grow w-full rounded-md p-2 text-sm border-gray-300 shadow-sm resize-none"
@@ -42,7 +42,6 @@
         x-model="message"
       ></textarea>
 
-      <!-- Send Button -->
       <button
         type="button"
         @click="submitMessage()"
@@ -53,59 +52,9 @@
     </form>
 
     <p id="output" class="hidden">Init</p>
-
-    <script>
-      async function chatComplete(chathis) {
-        renderChat(chathis);
-        const response = await fetch(window.location.href, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(chathis),
-        });
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder("utf-8");
-
-        let done, value;
-        let modelText = "";
-        while (({ done, value } = await reader.read())) {
-          const text = decoder.decode(value, { stream: !done });
-          if (done) break;
-          modelText += text;
-          document.getElementById("output").textContent += text;
-        }
-        if (modelText.trim()) {
-          chathis[chathis.length - 1] = { role: "model", text: modelText };
-        }
-      }
-
-      function renderChat(chathis) {
-        const chatBox = document.getElementById("chat-box");
-        chatBox.innerHTML = "";
-        chathis.forEach((obj) => {
-          const d = document.createElement("div");
-          d.textContent = obj.text;
-          d.style.whiteSpace = "pre-wrap";
-          d.classList.add("markdown");
-
-          // Chat bubble styling
-          if (obj.role === "user") {
-            d.classList.add("bg-blue-100", "text-blue-900", "p-2", "rounded-lg", "self-end", "max-w-xs", "shadow");
-          } else {
-            d.classList.add("bg-gray-200", "text-gray-800", "p-2", "rounded-lg", "self-start", "max-w-xs", "shadow");
-          }
-          chatBox.appendChild(d);
-        });
-        toMarkdown();
-        chatBox.scrollTop = chatBox.scrollHeight;
-      }
-    </script>
   </div>
-
-  {{ template "chat-script" }} 
-  {{ template "iframe-resize-script" }}
 </div>
+{{ end }}
 
 {{ define "chat-script" }}
 <script>
@@ -133,15 +82,47 @@
       p.innerHTML = html;
     });
   }
+
+  function renderChat(chathis) {
+    const chatBox = document.getElementById("chat-box");
+    chatBox.innerHTML = "";
+    chathis.forEach((obj) => {
+      const d = document.createElement("div");
+      d.textContent = obj.text;
+      d.style.whiteSpace = "pre-wrap";
+      d.classList.add("markdown");
+
+      if (obj.role === "user") {
+        d.classList.add("bg-blue-100", "text-blue-900", "p-2", "rounded-lg", "self-end", "max-w-xs", "shadow");
+      } else {
+        d.classList.add("bg-gray-200", "text-gray-800", "p-2", "rounded-lg", "self-start", "max-w-xs", "shadow");
+      }
+      chatBox.appendChild(d);
+    });
+    toMarkdown();
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
+
+  window.onload = function () {
+    let chat = localStorage.getItem(getChatName());
+    if (!chat) chat = [];
+    try {
+      chat = JSON.parse(chat);
+    } catch (e) {
+      chat = [];
+    }
+    localStorage.setItem(getChatName(), JSON.stringify(chat));
+    renderChat(chat);
+  };
 </script>
 {{ end }}
 
 {{ define "iframe-resize-script" }}
 <script>
   function resizeIframe() {
-    var iframe = document.getElementById("iframe-div").getElementsByTagName("iframe")[0];
-    var height = document.getElementById("iframe-div").offsetHeight;
-    iframe.style.height = height - 5 + "px";
+    const iframe = document.getElementById("iframe-div").getElementsByTagName("iframe")[0];
+    const height = document.getElementById("iframe-div").offsetHeight;
+    iframe.style.height = `${height - 5}px`;
   }
 
   document.getElementById("iframe-div").getElementsByTagName("iframe")[0].addEventListener("load", resizeIframe);
