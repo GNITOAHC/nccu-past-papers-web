@@ -11,6 +11,29 @@
 </div>
 {{ end }}
 
+<!-- 搜尋框 -->
+<div class="flex items-center mb-4">
+  <input
+    id="search-input"
+    type="text"
+    class="px-4 py-2 border rounded-md"
+    placeholder="Search..."
+  />
+  <button
+  id="search-button"
+  style="margin-left: 8px; padding: 8px"
+  onclick="triggerSearch()"
+  >
+  Search
+  </button>
+
+</div>
+
+<!-- 搜尋結果顯示區 -->
+<div id="results-container" class="mt-4">
+  <!-- 搜尋結果將顯示在這裡 -->
+</div>
+
 <div class="my-4">
   <!-- prettier-ignore -->
   {{ $path := .Path }} {{ $parts := split .Path "/" }}
@@ -65,6 +88,46 @@
 <!-- -->
 
 <!-- -->
+<!-- 搜尋功能 -->
+<script>
+  // 搜尋功能
+  function triggerSearch() {
+    const query = document.getElementById("search-input").value;
+  
+    // 顯示 loading 狀態
+    document.getElementById("results-container").innerHTML = "<p>Loading...</p>";
+  
+    // 在前端發送搜尋請求
+    fetch('http://localhost:3000/search?query=' + encodeURIComponent(query))
+    .then(response => response.json())
+    .then(results => {
+      displayResults(results); // 顯示搜尋結果
+    })
+    .catch(error => {
+      console.error("Search failed:", error);
+      document.getElementById("results-container").innerHTML = "<p>Error loading results.</p>";
+    });
+
+
+  }
+  
+  // 顯示搜尋結果
+  function displayResults(results) {
+    const resultsContainer = document.getElementById("results-container");
+    resultsContainer.innerHTML = ""; // 清空現有結果
+  
+    if (!results || results.length === 0) {
+      resultsContainer.innerHTML = "<p>No matching results found.</p>";
+    } else {
+      results.forEach(file => {
+        const fileElement = document.createElement("div");
+        fileElement.className = "file-result";
+        fileElement.innerHTML = `<a href="${file.path}">${file.path}</a>`;
+        resultsContainer.appendChild(fileElement);
+      });
+    }
+  }
+  </script>
 
 {{ define "upload-script" }}
 <script>
