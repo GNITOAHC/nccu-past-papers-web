@@ -9,8 +9,8 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-
 	"past-papers-web/internal/config"
+	"fmt"
 )
 
 // Helper struct contains all the necessary data for the helper functions.
@@ -34,6 +34,99 @@ func NewHelper(config *config.Config) *Helper {
 		client:            &http.Client{},
 		TreeNode:          treeNode,
 	}
+}
+
+type FileChange struct {
+	Filename   string `json:"filename"`
+	Number int    `json:"number"`
+}
+
+type PullRequest struct {
+	Number int    `json:"number"`
+}
+
+func (a *Helper) GetPullRequest(repoOwner string, repoName string, token string) ([]PullRequest, error) {
+	apiUrl := fmt.Sprintf("https://api.github.com/repos/%s/%s/pulls", repoOwner, repoName)
+	req, err := http.NewRequest("GET", apiUrl, nil)
+	req.Header.Set("Accept", "application/vnd.github+json")
+	req.Header.Set("Authorization", "Bearer "+ token)
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Print(err)
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		log.Print(errors.New("failed to fetch pull requests, status: " + resp.Status))
+		return nil, err
+	}
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Print(err)
+		return nil, err
+	}
+	var prs []PullRequest
+	err = json.Unmarshal(body, &prs)
+	if err != nil {
+		log.Print(err)
+		return nil, err
+	}
+	return prs, nil
+}
+
+func (a *Helper) GetFileChange(repoOwner string, repoName string, PRnumber int, token string) ([]FileChange, error) {
+	apiUrl := fmt.Sprintf("https://api.github.com/repos/%s/%s/pulls/%d/files", repoOwner, repoName, PRnumber)
+	req, err := http.NewRequest("GET", apiUrl, nil)
+	req.Header.Set("Accept", "application/vnd.github+json")
+	req.Header.Set("Authorization", "Bearer "+ token)
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Print(err)
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		log.Print(errors.New("failed to fetch file change, status: " + resp.Status))
+		return nil, err
+	}
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Print(err)
+		return nil, err
+	}
+	var fls []FileChange
+	err = json.Unmarshal(body, &fls)
+	if err != nil {
+		log.Print(err)
+		return nil, err
+	}
+	return fls, nil
+}
+
+func (a *Helper) GetPRList(repoOwner string, repoName string, token string) []FileChange {
+	prNumber, err := a.GetPullRequest(repoOwner, repoName, token)
+	if err != nil {
+		log.Fatalf("Error fetching pull requests: %v", err)
+	}
+	var result []FileChange
+	for _, pr := range prNumber {
+		files, err := a.GetFileChange(repoOwner, repoName, pr.Number, token)
+		if err != nil {
+			log.Fatalf("Error fetching file change for Pull Request #%d: %v", pr.Number, err)
+			continue
+		}
+
+		for _, file := range files{
+			list := FileChange{
+				file.Filename,
+				pr.Number,
+			}
+			result = append(result, list)
+		}
+	}
+	return result
 }
 
 // Send a request given the method, URL, body and header. Returning the raw response and error.

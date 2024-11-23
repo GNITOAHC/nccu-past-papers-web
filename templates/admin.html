@@ -35,6 +35,37 @@
   {{ template "scripts" . }}
 </div>
 
+<div>
+  <div>
+    <table class="table-auto">
+      <thead>
+        <tr>
+          <th>FileName</th>
+        </tr>
+      </thead>
+      <!-- prettier-ignore -->
+      <tbody class="gap-2">
+      {{ range $widx, $content := .PRList }}
+        <tr>
+            <td class="text-left pl-8" id="pr-list-{{ $widx }}" pr-number="{{ $content.Number }}">
+              <a target="_blank" href="https://github.com/GNITOAHC/nccu-past-papers/pull/{{$content.Number}}">
+                {{ $content.Filename }}
+              </a>
+            </td>
+          <td class="text-center pl-8">
+            <button type="button" class="" id="pr-approve-btn-{{ $widx }}">Approve</button>
+          </td>
+          <td class="text-right pl-8">
+            <button type="button" class="" id="pr-delete-btn-{{ $widx }}">Delete</button>
+          </td>
+        </tr>
+      {{ end }}
+    </tbody>
+    </table>
+  </div>
+  {{ template "PR" . }}
+</div>
+
 <!-- -->
 
 {{ define "scripts"}}
@@ -84,6 +115,49 @@
   }
   for (let i = 0; i < {{ len .WaitingList }}; ++i) {
     document.getElementById(`delete-btn-${i}`).onclick = async function () {
+      await del(i)
+    }
+  }
+</script>
+{{ end }}
+
+{{ define "PR"}}
+<script>
+  async function approve(idx) {
+    window.alert('Approving PR...')
+    const element = document.getElementById(`pr-list-${idx}`)
+    const num = element.getAttribute("pr-number")
+    const prNumber = parseInt(num,10)
+    const response = await fetch('/admin/pr_approve', { method: 'PUT', body: JSON.stringify({ pr: prNumber })})
+    if (!response.ok) {
+      console.error('Failed to approve')
+      window.alert('Failed to approve, please check the github manually')
+      return
+    }
+    window.alert('PR #' + num + ' merged')
+    window.location.reload()
+  }
+  async function del(idx) {
+    window.alert('Deleting PR...')
+    const element = document.getElementById(`pr-list-${idx}`)
+    const num = element.getAttribute("pr-number")
+    const prNumber = parseInt(num,10)
+    const response = await fetch('/admin/pr_delete', { method: 'PATCH', body: JSON.stringify({ pr: prNumber })})
+    if (!response.ok) {
+      console.error('Failed to delete')
+      window.alert('Failed to delete, please check the github manually')
+      return
+    }
+    window.alert('PR #' + num + ' closed')
+    window.location.reload()
+  }
+  for (let i = 0; i < {{ len .PRList }}; ++i) {
+    document.getElementById(`pr-approve-btn-${i}`).onclick = async function () {
+      await approve(i)
+    }
+  }
+  for (let i = 0; i < {{ len .PRList }}; ++i) {
+    document.getElementById(`pr-delete-btn-${i}`).onclick = async function () {
       await del(i)
     }
   }

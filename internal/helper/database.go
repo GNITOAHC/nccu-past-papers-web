@@ -3,8 +3,10 @@ package helper
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log"
+	"net/http"
 	"strings"
 )
 
@@ -167,4 +169,54 @@ func (h *Helper) RegisterUser(mail string, name string, studentId string) bool {
 		return false
 	}
 	return true
+}
+
+func (h *Helper) ApprovePullRequest(pr int) error {
+	header := map[string]string{
+		"Accept": "application/vnd.github+json",
+        "Authorization": "Bearer " + h.githubAccessToken,
+	}
+	mergeBody := `{
+		"commit_title": "Approved by admin",
+		"commit_message": "Merge PR from app",
+		"merge_method": "squash"}`
+	apiUrl := fmt.Sprintf("https://api.github.com/repos/GNITOAHC/nccu-past-papers/pulls/%d/merge", pr)
+	res, err := h.request("PUT", apiUrl , strings.NewReader(mergeBody), header)
+	if err != nil {
+		log.Print(err)
+		return err
+	}
+	_, err = io.ReadAll(res.Body)
+	if err != nil {
+		log.Print(err)
+		return err
+	}
+	if res.StatusCode != http.StatusOK {
+		return errors.New("Failed to merge PR")
+	}
+	return nil
+}
+
+func (h *Helper) DeletePullRequest(pr int) error {
+	header := map[string]string{
+		"Accept": "application/vnd.github+json",
+        "Authorization": "Bearer " + h.githubAccessToken,
+	}
+	mergeBody := `{
+		"state": "closed"}`
+	apiUrl := fmt.Sprintf("https://api.github.com/repos/GNITOAHC/nccu-past-papers/pulls/%d", pr)
+	res, err := h.request("PATCH", apiUrl , strings.NewReader(mergeBody), header)
+	if err != nil {
+		log.Print(err)
+		return err
+	}
+	_, err = io.ReadAll(res.Body)
+	if err != nil {
+		log.Print(err)
+		return err
+	}
+	if res.StatusCode != http.StatusOK {
+		return errors.New("Failed to close PR")
+	}
+	return nil
 }
