@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
+	
 	"past-papers-web/internal/config"
-	"fmt"
 )
 
 // Helper struct contains all the necessary data for the helper functions.
