@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	
+
 	"past-papers-web/internal/config"
 )
 
