@@ -180,7 +180,7 @@ func (h *Helper) ApprovePullRequest(pr int) error {
 		"commit_title": "Approved by admin",
 		"commit_message": "Merge PR from app",
 		"merge_method": "squash"}`
-	apiUrl := fmt.Sprintf("https://api.github.com/repos/GNITOAHC/nccu-past-papers/pulls/%d/merge", pr)
+	apiUrl := fmt.Sprintf(h.repoAPI + "pulls/%d/merge", pr)
 	res, err := h.request("PUT", apiUrl , strings.NewReader(mergeBody), header)
 	if err != nil {
 		log.Print(err)
@@ -204,7 +204,7 @@ func (h *Helper) DeletePullRequest(pr int) error {
 	}
 	mergeBody := `{
 		"state": "closed"}`
-	apiUrl := fmt.Sprintf("https://api.github.com/repos/GNITOAHC/nccu-past-papers/pulls/%d", pr)
+	apiUrl := fmt.Sprintf(h.repoAPI + "pulls/%d", pr)
 	res, err := h.request("PATCH", apiUrl , strings.NewReader(mergeBody), header)
 	if err != nil {
 		log.Print(err)

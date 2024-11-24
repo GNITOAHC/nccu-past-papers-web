@@ -45,7 +45,7 @@ func (a *App) RegisterAdminRoutes(prefix string, mux *http.ServeMux) {
 func (a *App) Admin(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		"WaitingList": a.helper.GetWaitingList(),
-		"PRList":      a.helper.GetPRList("GNITOAHC", "nccu-past-papers", a.config.GitHubAccessToken),
+		"PRList":      a.helper.GetPRList(a.config.GitHubAccessToken),
 	}
 	templates.Render(w, "admin.html", data)
 	// a.tmplExecute(w, []string{"templates/admin.html"}, map[string]interface{}{
