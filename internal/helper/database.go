@@ -3,8 +3,10 @@ package helper
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log"
+	"net/http"
 	"strings"
 )
 
@@ -96,6 +98,25 @@ func (h *Helper) ApproveRegistration(mail, name, studentId string) error {
 	return nil
 }
 
+func (h *Helper) DeleteRegistration(mail, name, studentId string) error {
+	deleteBody := `{
+        "sheetName": "waiting-list",
+        "action": "delete",
+        "columnName": "email",
+        "rowValue": "` + mail + `"}`
+	res, err := h.request("POST", h.gasAPI, strings.NewReader(deleteBody), nil)
+	if err != nil {
+		log.Print(err)
+		return err
+	}
+	_, err = io.ReadAll(res.Body)
+	if err != nil {
+		log.Print(err)
+		return err
+	}
+	return nil
+}
+
 // GetWaitingList returns the waiting list from the database.
 //
 // @return [][]string: Waiting list data _e.g._ [["mail1", "name1", "123456"], ["mail2", "name2", "654321"]]
@@ -148,4 +169,54 @@ func (h *Helper) RegisterUser(mail string, name string, studentId string) bool {
 		return false
 	}
 	return true
+}
+
+func (h *Helper) ApprovePullRequest(pr int) error {
+	header := map[string]string{
+		"Accept": "application/vnd.github+json",
+        "Authorization": "Bearer " + h.githubAccessToken,
+	}
+	mergeBody := `{
+		"commit_title": "Approved by admin",
+		"commit_message": "Merge PR from app",
+		"merge_method": "squash"}`
+	apiUrl := fmt.Sprintf(h.repoAPI + "pulls/%d/merge", pr)
+	res, err := h.request("PUT", apiUrl , strings.NewReader(mergeBody), header)
+	if err != nil {
+		log.Print(err)
+		return err
+	}
+	_, err = io.ReadAll(res.Body)
+	if err != nil {
+		log.Print(err)
+		return err
+	}
+	if res.StatusCode != http.StatusOK {
+		return errors.New("Failed to merge PR")
+	}
+	return nil
+}
+
+func (h *Helper) DeletePullRequest(pr int) error {
+	header := map[string]string{
+		"Accept": "application/vnd.github+json",
+        "Authorization": "Bearer " + h.githubAccessToken,
+	}
+	mergeBody := `{
+		"state": "closed"}`
+	apiUrl := fmt.Sprintf(h.repoAPI + "pulls/%d", pr)
+	res, err := h.request("PATCH", apiUrl , strings.NewReader(mergeBody), header)
+	if err != nil {
+		log.Print(err)
+		return err
+	}
+	_, err = io.ReadAll(res.Body)
+	if err != nil {
+		log.Print(err)
+		return err
+	}
+	if res.StatusCode != http.StatusOK {
+		return errors.New("Failed to close PR")
+	}
+	return nil
 }

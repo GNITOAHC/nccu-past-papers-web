@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -34,6 +35,99 @@ func NewHelper(config *config.Config) *Helper {
 		client:            &http.Client{},
 		TreeNode:          treeNode,
 	}
+}
+
+type FileChange struct {
+	Filename   string `json:"filename"`
+	Number int    `json:"number"`
+}
+
+type PullRequest struct {
+	Number int    `json:"number"`
+}
+
+func (a *Helper) GetPullRequest(token string) ([]PullRequest, error) {
+	apiUrl := fmt.Sprintf(a.repoAPI+"pulls")
+	req, err := http.NewRequest("GET", apiUrl, nil)
+	req.Header.Set("Accept", "application/vnd.github+json")
+	req.Header.Set("Authorization", "Bearer "+ token)
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Print(err)
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		log.Print(errors.New("failed to fetch pull requests, status: " + resp.Status))
+		return nil, err
+	}
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Print(err)
+		return nil, err
+	}
+	var prs []PullRequest
+	err = json.Unmarshal(body, &prs)
+	if err != nil {
+		log.Print(err)
+		return nil, err
+	}
+	return prs, nil
+}
+
+func (a *Helper) GetFileChange(PRnumber int, token string) ([]FileChange, error) {
+	apiUrl := fmt.Sprintf(a.repoAPI+"pulls/%d/files", PRnumber)
+	req, err := http.NewRequest("GET", apiUrl, nil)
+	req.Header.Set("Accept", "application/vnd.github+json")
+	req.Header.Set("Authorization", "Bearer "+ token)
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Print(err)
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		log.Print(errors.New("failed to fetch file change, status: " + resp.Status))
+		return nil, err
+	}
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Print(err)
+		return nil, err
+	}
+	var fls []FileChange
+	err = json.Unmarshal(body, &fls)
+	if err != nil {
+		log.Print(err)
+		return nil, err
+	}
+	return fls, nil
+}
+
+func (a *Helper) GetPRList(token string) []FileChange {
+	prNumber, err := a.GetPullRequest(token)
+	if err != nil {
+		log.Fatalf("Error fetching pull request: %v", err)
+	}
+	var result []FileChange
+	for _, pr := range prNumber {
+		files, err := a.GetFileChange(pr.Number, token)
+		if err != nil {
+			log.Fatalf("Error fetching file change for Pull Request #%d: %v", pr.Number, err)
+			continue
+		}
+
+		for _, file := range files{
+			list := FileChange{
+				file.Filename,
+				pr.Number,
+			}
+			result = append(result, list)
+		}
+	}
+	return result
 }
 
 // Send a request given the method, URL, body and header. Returning the raw response and error.
