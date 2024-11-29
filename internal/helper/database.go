@@ -96,6 +96,25 @@ func (h *Helper) ApproveRegistration(mail, name, studentId string) error {
 	return nil
 }
 
+func (h *Helper) DeleteRegistration(mail, name, studentId string) error {
+	deleteBody := `{
+        "sheetName": "waiting-list",
+        "action": "delete",
+        "columnName": "email",
+        "rowValue": "` + mail + `"}`
+	res, err := h.request("POST", h.gasAPI, strings.NewReader(deleteBody), nil)
+	if err != nil {
+		log.Print(err)
+		return err
+	}
+	_, err = io.ReadAll(res.Body)
+	if err != nil {
+		log.Print(err)
+		return err
+	}
+	return nil
+}
+
 // GetWaitingList returns the waiting list from the database.
 //
 // @return [][]string: Waiting list data _e.g._ [["mail1", "name1", "123456"], ["mail2", "name2", "654321"]]
