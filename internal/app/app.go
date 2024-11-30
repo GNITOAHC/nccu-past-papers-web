@@ -25,6 +25,7 @@ type App struct {
 	usercache *cache.Cache[string, interface{}] // Cache for users who are logged in
 	filecache *cache.Cache[string, []byte]      // Cache for files from the server
 	chatcache *cache.Cache[string, string]      // Cache for uploaded files to Gemini
+	otpcache  *cache.Cache[string, UserReg]
 	mailer    *mailer.Mailer
 }
 
@@ -50,6 +51,7 @@ func NewApp() *App {
 	usercache := cache.New[string, interface{}]()
 	filecache := cache.New[string, []byte]()
 	chatcache := cache.New[string, string]()
+	otpcache := cache.New[string, UserReg]()
 	mailer := mailer.New(config.SMTPFrom, config.SMTPPass, config.SMTPHost, config.SMTPPort, 10)
 	return &App{
 		helper:    helper.NewHelper(config),
@@ -58,6 +60,7 @@ func NewApp() *App {
 		filecache: filecache,
 		chatcache: chatcache,
 		mailer:    mailer,
+		otpcache:  otpcache,
 	}
 }
 
@@ -70,6 +73,7 @@ func (a *App) Routes() http.Handler {
 	a.RegisterAdminRoutes("/admin", mux)
 	mux.HandleFunc("/refresh-tree", a.RefreshTree)
 	mux.HandleFunc("/register", a.Register)
+	mux.HandleFunc("/verify-otp", a.VerifyOTP)
 	mux.HandleFunc("/content/", a.ContentHandler)
 	mux.HandleFunc("/file/", a.loginProtect(a.FileHandler))
 	mux.HandleFunc("/chat/", a.loginProtect(a.Chat))

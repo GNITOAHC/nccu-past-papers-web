@@ -1,13 +1,39 @@
 package app
 
 import (
-	"bytes"
-	"html/template"
+	"crypto/rand"
+	"math/big"
 	"net/http"
 	"past-papers-web/templates"
+	"past-papers-web/templates/mail"
 	"strings"
 	"time"
 )
+
+type UserReg struct {
+	Email     string
+	Name      string
+	StudentId string
+	OTP       string
+}
+
+func generateOTP() (string, error) {
+	const otpLength = 6
+	charset := "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+	charsetLen := len(charset)
+
+	otp := make([]byte, otpLength)
+	for i := 0; i < otpLength; i++ {
+		// Generate a random index to pick a character from charset
+		num, err := rand.Int(rand.Reader, big.NewInt(int64(charsetLen)))
+		if err != nil {
+			return "", err
+		}
+		otp[i] = charset[num.Int64()]
+	}
+
+	return string(otp), nil
+}
 
 func (a *App) Register(w http.ResponseWriter, r *http.Request) {
 	// Register user
@@ -20,6 +46,14 @@ func (a *App) Register(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	otp, err := generateOTP()
+	if err != nil {
+		http.Error(w, "Failed to generate OTP", http.StatusInternalServerError)
+		return
+	}
+	a.otpcache.Set(email, UserReg{
+		Email: email, Name: name, StudentId: studentId, OTP: otp,
+	}, time.Duration(time.Minute*10))
 	success := a.helper.RegisterUser(email, name, studentId)
 	if !success {
 		http.Error(w, "Failed to register user", http.StatusInternalServerError)
@@ -28,36 +62,8 @@ func (a *App) Register(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Success, please check your email and wait for approval.")) // Write to response first
 
 	// Send mail to user
-	t, err := template.ParseFiles("templates/mail/register.html")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	buf := new(bytes.Buffer)
-	data := map[string]interface{}{"Name": name}
-	if err = t.Execute(buf, data); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	a.mailer.Send(email, "Registration", buf.String())
-
-	// Send mail to administator
-	t, err = template.ParseFiles("templates/mail/regadminnotify.html")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	buf = new(bytes.Buffer)
-	data = map[string]interface{}{"Name": name, "Email": email, "StudentId": studentId}
-	if err = t.Execute(buf, data); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	for _, admin := range strings.Split(a.config.ADMIN_MAIL, ",") {
-		a.mailer.Send(strings.TrimSpace(admin), "New Registration", buf.String())
-	}
-
-	return
+	data := map[string]interface{}{"Name": name, "OTP": otp}
+	mail.SendMail(a.mailer, data, "OTP Verification", []string{"templates/mail/otp.html"}, []string{email})
 }
 
 func (a *App) Login(w http.ResponseWriter, r *http.Request) {
@@ -86,4 +92,49 @@ func (a *App) Login(w http.ResponseWriter, r *http.Request) {
 	}
 	templates.Render(w, "entry.html", nil)
 	return
+}
+
+func (a *App) VerifyOTP(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	email := r.FormValue("email")
+	otp := r.FormValue("otp")
+	if email == "" || otp == "" {
+		print("Missing Email or OTP")
+		http.Error(w, "Missing Email or OTP", http.StatusBadRequest)
+		return
+	}
+	info, ok := a.otpcache.Get(email)
+	if !ok {
+		http.Error(w, "OTP expired or not found", http.StatusBadRequest)
+		return
+	}
+	if info.OTP != otp {
+		http.Error(w, "Invalid OTP", http.StatusBadRequest)
+		return
+	}
+
+	err := a.helper.ApproveRegistration(info.Email, info.Name, info.StudentId)
+	if err != nil {
+		http.Error(w, "Failed to register user", http.StatusInternalServerError)
+		return
+	}
+
+	w.Write([]byte("Success, you can now login.")) // Write to response first
+	a.otpcache.Delete(email)
+
+	data := map[string]interface{}{"Name": info.Name, "Email": email, "StudentId": info.StudentId}
+	err = mail.SendMail(a.mailer, data, "New Registration", []string{"templates/mail/regadminnotify.html"}, strings.Split(a.config.ADMIN_MAIL, ","))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = mail.SendMail(a.mailer, map[string]interface{}{"Name": info.Name}, "OTP Verified", []string{"templates/mail/register.html"}, []string{email})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
