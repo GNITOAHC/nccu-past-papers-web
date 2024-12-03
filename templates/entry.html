@@ -1,7 +1,7 @@
 <div style="padding-left: 6rem; padding-right: 6rem; padding-top: 15%">
   <div x-data="{ login: true, modalOpen: false, email: '', wait: false }">
-    <h1 class="mb-4 flex justify-center" x-show="login">Login</h1>
-    <h1 class="mb-4 flex justify-center" x-show="!login">Register</h1>
+    <h1 class="mb-4 flex justify-center text-4xl" x-show="login">Login</h1>
+    <h1 class="mb-4 flex justify-center text-4xl" x-show="!login">Register</h1>
     <!-- prettier-ignore -->
     {{ template "login-form" }} {{ template "register-form" }}
     {{ template "otp-modal" }}
@@ -27,9 +27,20 @@
       name="email"
       placeholder="example@example.com"
       autocomplete="email"
+      class="w-full max-w-md p-2 border border-gray-300 rounded-lg h-8 focus:outline-none focus:ring-1 focus:ring-blue-500"
     />
-    <button type="submit" class="hidden md:block">Login</button>
-    <button type="submit" class="md:hidden">&gt;</button>
+    <button
+      type="submit"
+      class="hidden md:block border border-gray-300 rounded-lg h-8 px-2"
+    >
+      Login
+    </button>
+    <button
+      type="submit"
+      class="md:hidden border border-gray-300 rounded-lg h-8 px-2"
+    >
+      &gt;
+    </button>
   </form>
   <div class="place-content-end">
     <button x-on:click="login = false" class="cursor-pointer">
@@ -50,10 +61,10 @@
     hx-post="/register"
     hx-target="this"
     hx-swap="none"
-    x-on:htmx:response-error="(evt) => document.getElementById('register-error').innerText = evt.detail.xhr.responseText; wait = false;"
-    x-on:htmx:after-settle="modalOpen = true; email = document.getElementById('email').value; wait = false;"
+    x-on:htmx:response-error="(evt) => $refs.regErr.innerText = evt.detail.xhr.responseText; wait = false;"
+    x-on:htmx:after-settle="modalOpen = true; email = $refs.email.value; wait = false;"
   >
-    <p class="text-red-400" id="register-error"></p>
+    <p class="text-red-400" x-ref="regErr"></p>
     <!-- prettier-ignore -->
     {{ $label := list "Email" "Name" "Student ID" }}
     {{ $name := list "email" "name" "studentId" }}
@@ -65,9 +76,10 @@
       <input
         type="text"
         name="{{ index $name $i }}"
-        id="{{ index $name $i }}"
+        x-ref="{{ index $name $i }}"
         placeholder="{{ index $placeholder $i }}"
         autocomplete="{{ index $autocomplete $i }}"
+        class="w-full max-w-md p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
       />
     </div>
     {{ end }}
@@ -75,7 +87,7 @@
     <button type="submit" x-on:click="wait = true">Register</button>
 
     <div class="flex w-full content-end">
-      <button x-on:click="login = true" class="cursor-pointer">
+      <button type="button" x-on:click="login = true" class="cursor-pointer">
         Have an account? Login
       </button>
     </div>
@@ -100,20 +112,18 @@
     <p
       class="text-gray-600 mb-2"
       id="otp-response"
-      x-on:htmx:after-swap="wait = false"
-      hx-on:htmx:after-swap="
-        document.getElementById('otp-redirect-btn').style.display = 'block'
-        document.getElementById('otp-form').style.display = 'none';
-        document.getElementById('otp-error').style.display = 'none';
+      x-on:htmx:after-swap="
+        wait = false;
+        $refs.otpForm.style.display = 'none'; $refs.otpErr.style.display = 'none'; $refs.otpRedirect.style.display = 'block';
       "
     >
       Please check your email for the OTP to complete verification.
     </p>
-    <p class="text-red-400" id="otp-error"></p>
+    <p class="text-red-400" x-ref="otpErr"></p>
 
     <form
       class="flex flex-col"
-      id="otp-form"
+      x-ref="otpForm"
       hx-target="#otp-response"
       hx-swap="innerHTML"
       hx-post="/verify-otp"
@@ -129,7 +139,7 @@
       href="/"
       style="display: none"
       class="border border-black rounded-md p-1 hover:bg-slate-200"
-      id="otp-redirect-btn"
+      x-ref="otpRedirect"
       >Redirect</a
     >
   </div>
