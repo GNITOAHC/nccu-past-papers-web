@@ -127,7 +127,7 @@
       hx-target="#otp-response"
       hx-swap="innerHTML"
       hx-post="/verify-otp"
-      x-on:htmx:response-error="(evt) => document.getElementById('otp-error').innerText = evt.detail.xhr.responseText; wait = false;"
+      x-on:htmx:response-error="(evt) => $refs.otpErr.innerText = evt.detail.xhr.responseText; wait = false;"
     >
       <input type="text" name="otp" placeholder="Enter OTP" />
       <input type="text" name="email" class="hidden" x-bind:value="email" />
