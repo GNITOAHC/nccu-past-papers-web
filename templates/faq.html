@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<div class="container mx-auto px-4 py-8">
+  <h1 class="text-3xl font-bold mb-8 text-center">FAQ</h1>
+
+  <!-- FAQ List -->
+  <div class="space-y-4">
+    {{range .qaList}}
+    <div class="p-4 border rounded-lg shadow-sm">
+      <div class="text-xl font-semibold cursor-pointer hover:text-indigo-600"
+           onclick="toggleAnswer(this)">
+        {{.Question}}
+      </div>
+      <div class="mt-2 text-lg font-medium hidden">
+        {{.Answer}}
+      </div>
+    </div>
+    {{end}}
+  </div>
+</div>
+
+<script>
+  function toggleAnswer(element) {
+    const answer = element.nextElementSibling;
+    answer.classList.toggle("hidden");
+  }
+</script>
+
+</html>
