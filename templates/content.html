@@ -79,7 +79,7 @@
     // HTML Structure
     resultsContainer.innerHTML = results
       .map((item) => {
-        const icon = item.type === "tree" ? "📁" : "📄";
+        const icon = item.type === "tree" ? "Folder: " : "File: ";
         return `
           <div>
             ${icon} <a href="https://github.com/${REPO_OWNER}/${REPO_NAME}/blob/${BRANCH}/${item.path}" target="_blank">${item.path}</a>
