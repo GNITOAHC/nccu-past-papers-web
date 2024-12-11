@@ -1,13 +1,15 @@
 <div style="padding-left: 6rem; padding-right: 6rem; padding-top: 15%">
-  <div x-data="{ login: true, showspinner: false }">
-    <h1 class="mb-4 flex justify-center" x-show="login">Login</h1>
-    <h1 class="mb-4 flex justify-center" x-show="!login">Register</h1>
+<div x-data="{ login: true, modalOpen: false, email: '', wait: false }">
+    <h1 class="mb-4 flex justify-center text-4xl" x-show="login">Login</h1>
+    <h1 class="mb-4 flex justify-center text-4xl" x-show="!login">Register</h1>
     <!-- prettier-ignore -->
     {{ template "login-form" }} {{ template "register-form" }}
-    {{ template "spinner" (dict "Id" "Spinner" "ShowName" "showspinner") }}
+    {{ template "otp-modal" }}
+    <div
+      class="absolute h-screen w-screen top-0 left-0 bg-gray-500/30 backdrop-blur-sm"
+      x-show="wait"
+    ></div>
   </div>
-  <!-- prettier-ignore -->
-  {{ template "script" }}
 </div>
 
 <!-- -->
@@ -25,9 +27,20 @@
       name="email"
       placeholder="example@example.com"
       autocomplete="email"
+      class="w-full max-w-md p-2 border border-gray-300 rounded-lg h-8 focus:outline-none focus:ring-1 focus:ring-blue-500"
     />
-    <button type="submit" class="hidden md:block">Login</button>
-    <button type="submit" class="md:hidden">&gt;</button>
+    <button
+      type="submit"
+      class="hidden md:block border border-gray-300 rounded-lg h-8 px-2"
+    >
+      Login
+    </button>
+    <button
+      type="submit"
+      class="md:hidden border border-gray-300 rounded-lg h-8 px-2"
+    >
+      &gt;
+    </button>
   </form>
   <div class="place-content-end">
     <button x-on:click="login = false" class="cursor-pointer">
@@ -45,8 +58,13 @@
     class="content-center w-80"
     id="register-form"
     enctype="multipart/form-data"
-    x-data="{ modalOpen: false }"
+    hx-post="/register"
+    hx-target="this"
+    hx-swap="none"
+    x-on:htmx:response-error="(evt) => $refs.regErr.innerText = evt.detail.xhr.responseText; wait = false;"
+    x-on:htmx:after-settle="modalOpen = true; email = $refs.email.value; wait = false;"
   >
+    <p class="text-red-400" x-ref="regErr"></p>
     <!-- prettier-ignore -->
     {{ $label := list "Email" "Name" "Student ID" }}
     {{ $name := list "email" "name" "studentId" }}
@@ -58,27 +76,18 @@
       <input
         type="text"
         name="{{ index $name $i }}"
+        x-ref="{{ index $name $i }}"
         placeholder="{{ index $placeholder $i }}"
-        class="form-control"
         autocomplete="{{ index $autocomplete $i }}"
+        class="w-full max-w-md p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
       />
     </div>
     {{ end }}
 
-    <button
-      type="submit"
-      x-on:click="modalOpen = true"
-      hx-post="/register"
-      hx-target="#auth-modal-body"
-      hx-on::before-request="replaceSpinner()"
-      hx-swap="innerHTML"
-    >
-      Register
-    </button>
-    {{ template "modal" }}
+    <button type="submit" x-on:click="wait = true">Register</button>
 
     <div class="flex w-full content-end">
-      <button x-on:click="login = true" class="cursor-pointer">
+      <button type="button" x-on:click="login = true" class="cursor-pointer">
         Have an account? Login
       </button>
     </div>
@@ -88,45 +97,49 @@
 
 <!-- -->
 
-{{ define "script" }}
-<script>
-  htmx.on("htmx:responseError", errorHandler);
-  htmx.on("htmx:sendError", errorHandler);
-  function errorHandler(event) {
-    document.getElementById("auth-modal-body").innerHTML =
-      event.detail.xhr.responseText;
-  }
-  function replaceSpinner() {
-    const spinner = document.getElementById("Spinner");
-    document.getElementById("auth-modal-body").innerHTML = spinner.innerHTML;
-  }
-</script>
-{{ end }}
-
-<!-- -->
-
-{{ define "modal" }}
+{{ define "otp-modal" }}
 <div
   x-show="modalOpen"
   x-transition
-  class="absolute h-screen w-screen top-0 left-0 bg-background/30 backdrop-blur-sm"
-  id="register-modal"
+  class="absolute h-screen w-screen top-0 left-0 bg-gray-500/30 backdrop-blur-sm flex items-center justify-center"
+  id="otp-modal"
 >
   <div
-    class="fixed inset-0 m-auto flex flex-col items-center justify-center max-w-xl max-h-32 text-black bg-white rounded-md"
+    class="fixed inset-0 m-auto flex flex-col items-center justify-center max-w-xl max-h-48 text-black bg-white rounded-md"
     x-on:click.away="modalOpen = false"
   >
+    <h2 class="text-xl font-bold mb-4">Verify OTP</h2>
     <p
-      id="auth-modal-body"
-      class="inline-flex items-center mb-1"
-      hx-on::after-swap="document.getElementById('auth-modal-footer').style.display = 'flex'"
-    ></p>
+      class="text-gray-600 mb-2"
+      id="otp-response"
+      x-on:htmx:after-swap="
+        wait = false;
+        $refs.otpForm.style.display = 'none'; $refs.otpErr.style.display = 'none'; $refs.otpRedirect.style.display = 'block';
+      "
+    >
+      Please check your email for the OTP to complete verification.
+    </p>
+    <p class="text-red-400" x-ref="otpErr"></p>
+
+    <form
+      class="flex flex-col"
+      x-ref="otpForm"
+      hx-target="#otp-response"
+      hx-swap="innerHTML"
+      hx-post="/verify-otp"
+      x-on:htmx:response-error="(evt) => $refs.otpErr.innerText = evt.detail.xhr.responseText; wait = false;"
+    >
+      <input type="text" name="otp" placeholder="Enter OTP" />
+      <input type="text" name="email" class="hidden" x-bind:value="email" />
+      <button type="submit" class="mt-2" x-on:click="wait = true">
+        Verify
+      </button>
+    </form>
     <a
-      href="/content/"
-      id="auth-modal-footer"
+      href="/"
       style="display: none"
       class="border border-black rounded-md p-1 hover:bg-slate-200"
-      x-on:click="modalOpen = false"
+      x-ref="otpRedirect"
       >Redirect</a
     >
   </div>
