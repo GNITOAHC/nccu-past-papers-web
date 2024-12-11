@@ -59,6 +59,8 @@ func NewTemplates() {
 
 	// log.Println(paths)
 
+    // https://stackoverflow.com/questions/38686583/golang-parse-all-templates-in-directory-and-subdirectories
+
 	tmpl = template.Must(tmpl.ParseFS(resources, paths...))
 }
 
@@ -79,7 +81,6 @@ func Render(w http.ResponseWriter, name string, data interface{}) {
 
 	err = tmpl.ExecuteTemplate(&buffer, "base.html", map[string]interface{}{
 		"Body": template.HTML(body.String()),
-		"dict": funcMap["dict"],
 	})
 	if err != nil {
 		err = fmt.Errorf("error executing template: %w", err)

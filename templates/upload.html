@@ -1,0 +1,11 @@
+<div x-data="{query: ''}" class="w-full">
+  <button x-on:click="console.log(query)">Console</button>
+  <div class="w-full justify-center">
+  <div class="flex gap-x-3 max-w-3xl">
+    <!-- prettier-ignore -->
+    {{ template "combobox" (dict "ItemPath" "/static/depts.json" "QueryName" "query" "Placeholder" "系所") }}
+    <input class="input" placeholder="教師名" />
+    <input class="input" placeholder="課名" />
+  </div>
+  </div>
+</div>

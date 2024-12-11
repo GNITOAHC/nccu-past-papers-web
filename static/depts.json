@@ -1,0 +1,9 @@
+{
+  "itemList": [
+    { "id": 0, "name": "資訊學院/資訊科學系", "disabled": false },
+    { "id": 1, "name": "外國語文學院/外文中心", "disabled": false },
+    { "id": 2, "name": "商學院/資訊管理學系", "disabled": false },
+    { "id": 3, "name": "商學院/國際經營與貿易學系", "disabled": false },
+    { "id": 4, "name": "商學院/財政學系", "disabled": false }
+  ]
+}

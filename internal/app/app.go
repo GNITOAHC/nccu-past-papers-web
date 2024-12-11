@@ -78,6 +78,9 @@ func (a *App) Routes() http.Handler {
 	mux.HandleFunc("/file/", a.loginProtect(a.FileHandler))
 	mux.HandleFunc("/chat/", a.loginProtect(a.Chat))
 	mux.HandleFunc("/chatep", a.loginProtect(a.ChatEndpoint))
+	mux.HandleFunc("/upload", func(w http.ResponseWriter, r *http.Request) {
+		templates.Render(w, "upload.html", nil)
+	})
 	return mux
 }
 

@@ -26,3 +26,12 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+  .input {
+    @apply focus:outline-none focus:ring-0 px-3 py-2 rounded-lg border border-gray-200 bg-white shadow-sm w-full placeholder-gray-400;
+  }
+  .input:disabled {
+    @apply bg-secondary text-secondary-light cursor-not-allowed;
+  }
+}
