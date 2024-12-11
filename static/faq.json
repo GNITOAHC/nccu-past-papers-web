@@ -1,0 +1,19 @@
+{
+  "itemList": [
+    {
+      "id": 0,
+      "summary": "What's your refund policy?",
+      "detail": "If you are not satisfied with your purchase, we offer a 30-day money-back guarantee. Please contact our support team for assistance."
+    },
+    {
+      "id": 1,
+      "summary": "Do you offer any discounts for bulk purchases?",
+      "detail": "Yes, we offer special discounts for bulk orders. Please reach out to our sales team with your requirements."
+    },
+    {
+      "id": 2,
+      "summary": "How do I track my order?",
+      "detail": "Once your order is shipped, you will receive an email with a tracking number. Use this number to track your order on our website."
+    }
+  ]
+}
