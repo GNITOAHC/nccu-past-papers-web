@@ -12,11 +12,11 @@ import (
 )
 
 type TreeNode struct {
-	Name     string
-	Path     string
-	Size     int
-	Children map[string]*TreeNode
-	IsDir    bool
+	Name     string               `json:"name"`
+	Path     string               `json:"path"`
+	Size     int                  `json:"size"`
+	Children map[string]*TreeNode `json:"children,omitempty"`
+	IsDir    bool                 `json:"isDir"`
 }
 
 type githubEntry struct {
@@ -26,6 +26,57 @@ type githubEntry struct {
 	Sha  string `json:"sha"`
 	Size *int   `json:"size,omitempty"` // pointer to an integer
 	Url  string `json:"url"`
+}
+
+// BFSSearch performs a breadth-first search for files or directories that contain the specified substring, case insensitive.
+func (t *TreeNode) BFSSearch(substring string) []*TreeNode {
+	var results []*TreeNode
+	queue := []*TreeNode{t} // 使用佇列進行 BFS
+
+	// 將搜尋子字串轉為小寫
+	substringLower := strings.ToLower(substring)
+
+	for len(queue) > 0 {
+		current := queue[0]
+		queue = queue[1:] // 移除已處理的元素
+
+		// 將當前節點的名稱和路徑轉為小寫進行比對
+		if strings.Contains(strings.ToLower(current.Name), substringLower) ||
+			strings.Contains(strings.ToLower(current.Path), substringLower) {
+			results = append(results, current)
+		}
+
+		// 將子節點加入佇列
+		for _, child := range current.Children {
+			queue = append(queue, child)
+		}
+	}
+
+	return results
+}
+
+// 這個處理函數用來處理搜尋請求
+func SearchHandler(w http.ResponseWriter, r *http.Request, root *TreeNode) {
+	// 從 URL 查詢參數中獲取搜尋字串
+	query := r.URL.Query().Get("query")
+	if query == "" {
+		http.Error(w, "Missing query parameter", http.StatusBadRequest)
+		return
+	}
+
+	// 使用廣度優先搜尋
+	results := root.BFSSearch(query)
+
+	// 返回搜尋結果
+	w.Header().Set("Content-Type", "application/json")
+	if len(results) == 0 {
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(map[string]string{"message": "No matching results found"})
+		return
+	}
+
+	// 返回搜尋結果作為 JSON 格式
+	json.NewEncoder(w).Encode(results)
 }
 
 // InitTree initialize the tree node and returns the data from the GitHub API.
