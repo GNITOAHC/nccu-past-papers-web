@@ -1,5 +1,6 @@
 {{ define "accordian" }}
 <div x-data="{ active: null }" class="mx-auto min-h-[16rem] w-full max-w-3xl">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <div
     x-data="{ items: [] }"
     x-init="
@@ -40,7 +41,10 @@
 
         <!-- Disclosure Panel -->
         <div x-disclosure:panel x-collapse>
-          <div class="pt-2 text-gray-600 max-w-xl" x-text="item.detail"></div>
+          <div
+            class="pt-2 max-w-xl prose"
+            x-html="marked.parse(item.detail)"
+          ></div>
         </div>
       </div>
     </template>

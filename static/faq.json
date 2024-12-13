@@ -2,18 +2,13 @@
   "itemList": [
     {
       "id": 0,
-      "summary": "What's your refund policy?",
-      "detail": "If you are not satisfied with your purchase, we offer a 30-day money-back guarantee. Please contact our support team for assistance."
+      "summary": "如何貢獻到此專案？",
+      "detail": "網站原始碼在 [GitHub](https://github.com/gnitoahc/nccu-past-papers-web) 上，歡迎任何人參與開發。"
     },
     {
       "id": 1,
-      "summary": "Do you offer any discounts for bulk purchases?",
-      "detail": "Yes, we offer special discounts for bulk orders. Please reach out to our sales team with your requirements."
-    },
-    {
-      "id": 2,
-      "summary": "How do I track my order?",
-      "detail": "Once your order is shipped, you will receive an email with a tracking number. Use this number to track your order on our website."
+      "summary": "有任何疑問或是 bug 要如何回報？",
+      "detail": "歡迎直接聯繫主要維護者 chaotingchen10@gmail.com，如果有任何建議也非常歡迎聯繫！"
     }
   ]
 }
