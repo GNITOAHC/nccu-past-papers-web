@@ -10,6 +10,7 @@ module.exports = {
         secondary: "var(--secondary)",
         "secondary-light": "var(--secondary-light)",
         border: "var(--border)",
+        muted: "var(--muted)",
       },
     },
   },

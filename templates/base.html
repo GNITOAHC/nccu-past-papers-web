@@ -20,6 +20,7 @@
     <script src="https://cdn.jsdelivr.net/npm/alpinejs-twmerge@latest/dist/alpinejs-twmerge.cdn.js"></script>
     <script defer src="https://unpkg.com/@alpinejs/ui@3.14.7/dist/cdn.min.js"></script>
     <script defer src="https://unpkg.com/@alpinejs/focus@3.14.7/dist/cdn.min.js"></script>
+    <script defer src="https://unpkg.com/@alpinejs/collapse@3.14.7/dist/cdn.min.js"></script>
     <script defer src="https://unpkg.com/alpinejs@3.14.7/dist/cdn.min.js"></script>
 
     <!-- Tailwindcss -->
@@ -32,11 +33,14 @@
   {{ template "themescript" }}
 
   <body class="h-[100dvh]">
-    <div class="flex flex-col h-full max-w-6xl mx-auto">
+    <div class="flex flex-col h-full max-w-6xl mx-auto md:px-6">
       {{ template "header" }}
       <div class="flex flex-grow flex-col">
         <div class="flex flex-col flex-grow">{{ .Body }}</div>
-        <footer><p class="text-center">&#169; 2024 chaoting.xyz</p></footer>
+        <footer class="flex flex-row justify-center pb-3">
+          <p class="text-center">&#169; 2024 chaoting.xyz</p>
+          <a href="/footer/faq" class="ml-2">FAQ</a>
+        </footer>
       </div>
     </div>
   </body>

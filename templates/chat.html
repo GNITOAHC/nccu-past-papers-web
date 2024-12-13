@@ -1,5 +1,16 @@
+<!-- prettier-ignore -->
+<div class="bg-red-400 text-white text-center text-lg rounded-lg my-4 py-4 w-full">
+  Chat page is still under active development.
+</div>
 <div class="flex w-full h-full">
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <!-- prettier-ignore -->
+  <div>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.css" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked-katex-extension@latest/lib/index.umd.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  </div>
 
   <div class="h-full w-2/3 file-section-cls" id="iframe-div">
     <iframe src="{{ .Src }}" class="w-full"></iframe>
@@ -7,36 +18,46 @@
   </div>
 
   <div
-    class="h-full max-h-screen overflow-y-scroll w-1/3 overflow-scroll"
-    x-data="{chatname: getChatName()}"
+    class="h-full flex flex-col max-h-screen overflow-y-scroll w-1/3 overflow-scroll"
+    x-data="{
+      chatname: getChatName(),
+      chathis: JSON.parse(localStorage.getItem(getChatName()) || '[]')
+    }"
   >
-    <div id="chat-box" class="flex-grow"></div>
+    <div x-ref="chatbox" class="flex-grow flex flex-col gap-y-3 prose">
+      <template x-for="chat in chathis">
+        <div
+          :id="$id('chat')"
+          x-html="toMarkdown(chat.text)"
+          class="whitespace-pre-wrap rounded-lg"
+          :class="chat.role === 'user' ? 'bg-blue-300' : 'bg-gray-300'"
+        ></div>
+      </template>
+    </div>
 
     <form
       class="flex flex-col"
       id="chat-form"
       x-data="{
-        chathis: JSON.parse(localStorage.getItem(chatname) || '[]'),
         message: '',
         submitMessage() {
-          document.getElementById('chat-input').value = '';
           if (this.message.trim() !== '') {
-            this.chathis.push({role: 'user', text: this.message});
-            this.chathis.push({role: 'model', text: 'Loading...'});
+            chathis.push({role: 'user', text: this.message});
+            chathis.push({role: 'model', text: 'Loading...'});
             this.message = '';
-            chatComplete(this.chathis);
+            this.complete(chathis)
           }
         },
+        complete: chatComplete,
       }"
       x-init="
         $watch('chathis', value => {
           localStorage.setItem(chatname, JSON.stringify(value));
-          renderChat(value);
         });
       "
     >
       <div class="col-span-full">
-        <label for="chat-input">Message:</label>
+        <label>Message:</label>
         <textarea
           class="w-full min-h-28 rounded-md border-0 p-1.5 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 sm:text-sm sm:leading-6"
           placeholder="問題"
@@ -44,16 +65,12 @@
           @keydown.enter.prevent="!$event.shiftKey && submitMessage()"
           @keydown.shift.enter="message += '\n'"
           x-model="message"
-          id="chat-input"
         ></textarea>
       </div>
     </form>
 
-    <p id="output">Init</p>
-
     <script>
       async function chatComplete(chathis) {
-        renderChat(chathis);
         const response = await fetch(window.location.href, {
           method: "POST",
           headers: {
@@ -70,13 +87,8 @@
           const text = decoder.decode(value, { stream: !done });
           if (done) break;
           modelText += text;
-          document.getElementById("output").textContent += text; // Append the streamed text to the output
-        }
-        console.log(chathis);
-        if (modelText.trim()) {
           chathis[chathis.length - 1] = { role: "model", text: modelText };
         }
-        console.log(chathis);
       }
     </script>
   </div>
@@ -105,44 +117,14 @@
     return "chatppw_" + fn;
   }
 
-  function toMarkdown() {
-    const paragraphs = document.querySelectorAll("div.markdown");
-    // Loop through each p tag and convert the Markdown content to HTML
-    paragraphs.forEach((p) => {
-      const markdown = p.innerText; // Get the markdown content
-      const html = marked.parse(markdown); // Convert markdown to HTML using Marked.js
-      p.innerHTML = html; // Replace p tag content with rendered HTML
-      console.log(html);
+  function toMarkdown(text) {
+    marked.use({
+      gfm: true,
+      breaks: true,
     });
+    marked.use(markedKatex({ throwOnError: false }));
+    return marked.parse(text);
   }
-
-  function renderChat(chathis) {
-    const chatBox = document.getElementById("chat-box");
-    chatBox.innerHTML = "";
-    chathis.forEach((obj) => {
-      const d = document.createElement("div");
-      d.textContent = obj.text;
-      d.style.whiteSpace = "pre-wrap";
-      d.classList.add("markdown");
-      chatBox.appendChild(d);
-    });
-    toMarkdown();
-  }
-
-  window.onload = function () {
-    let chat = localStorage.getItem(getChatName());
-    if (chat === null) {
-      chat = [];
-    }
-    try {
-      chat = JSON.parse(chat);
-    } catch (e) {
-      chat = [];
-    }
-    localStorage.setItem(getChatName(), JSON.stringify(chat));
-
-    renderChat(chat);
-  };
 </script>
 {{ end }}
 

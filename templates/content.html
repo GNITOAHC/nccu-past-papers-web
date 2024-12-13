@@ -51,10 +51,25 @@
   </li>
   <!-- prettier-ignore -->
   {{  else }}
-  {{    $btnc := "w-full px-4 py-2" }}
-  {{    template "dropdown" (dict "Menu" (dict "Chat" .Link "Download" .Download) "IsLink" true "Title" .Name "TitleId" .Name "ButtonClass" $btnc) }}
+  <li
+    class="w-full px-4 py-2 flex flex-row justify-between"
+    x-data="{hover: false}"
+    @mouseenter="hover = true"
+    @mouseleave="hover = false"
+  >
+    <a href="{{ .Download }}">{{ .Name }}</a>
+    <!-- prettier-ignore -->
+    <div class="flex flex-row items-center ml-3 gap-2" x-show="hover">
+      <a href="{{ .Download }}" target="_blank"><i data-lucide="eye" width="18" height="18"></i></a>
+      <a href="{{ .Download }}" download><i data-lucide="download" width="18" height="18"></i></a>
+      <a href="{{ .Link }}"><i data-lucide="bot" width="18" height="18"></i></a>
+    </div>
+  </li>
   {{ end }} {{ end }}
 </ul>
+<script>
+  lucide.createIcons();
+</script>
 
 <form id="upload-form" class="h-20" enctype="multipart/form-data">
   <input type="text" name="name" placeholder="Name" />

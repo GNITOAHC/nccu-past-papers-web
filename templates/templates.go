@@ -7,10 +7,11 @@ import (
 	"html/template"
 	"io/fs"
 	"net/http"
+	"path/filepath"
 	"strings"
 )
 
-//go:embed all:*.html all:components/*.html
+//go:embed all:*.html all:components/*.html all:footer/*.html
 var resources embed.FS
 
 var tmpl *template.Template = nil
@@ -46,7 +47,7 @@ var funcMap = template.FuncMap{
 	// Add more functions as needed
 }
 
-func NewTemplates() {
+func _NewTemplates() {
 	tmpl = template.New("").Funcs(funcMap)
 
 	var paths []string
@@ -64,12 +65,63 @@ func NewTemplates() {
 	tmpl = template.Must(tmpl.ParseFS(resources, paths...))
 }
 
+// NewTemplates loads all templates from the templates directory and this must succeed
+func NewTemplates() {
+	root := template.New("")
+
+	// Helper function to recursively process directories
+	var processDir func(dir string) error
+	processDir = func(dir string) error {
+		entries, err := resources.ReadDir(dir)
+		if err != nil {
+			print("failed to read directory: ", dir, " ", err, "\n")
+			panic(err)
+		}
+
+		for _, entry := range entries {
+			path := filepath.Join(dir, entry.Name())
+			if entry.IsDir() {
+				// Recursively process subdirectory
+				if err := processDir(path); err != nil {
+					panic(err)
+				}
+			} else if strings.HasSuffix(entry.Name(), ".html") {
+				// Read and parse the template file
+				content, err := resources.ReadFile(path)
+				if err != nil {
+					print("failed to read template file ", path, " ", err, "\n")
+					panic(err)
+				}
+
+				t := root.New(path).Funcs(funcMap)
+				_, err = t.Parse(string(content))
+				if err != nil {
+					print("failed to parse template ", path, " ", err, "\n")
+					panic(err)
+				}
+
+				print(path, " loaded\n")
+			}
+		}
+
+		return nil
+	}
+
+	// Start processing from the root directory
+	if err := processDir("."); err != nil {
+		print("failed to load templates: ", err, "\n")
+		panic(err)
+	}
+
+	tmpl = root
+}
+
 func Render(w http.ResponseWriter, name string, data interface{}) {
 	var body bytes.Buffer
 
 	// log.Println("Rendering template", name)
 
-	name = strings.Replace(name, "/", "_", -1)
+	// name = strings.Replace(name, "/", "_", -1)
 	err := tmpl.ExecuteTemplate(&body, name, data)
 	if err != nil {
 		err = fmt.Errorf("error executing template: %w", err)
