@@ -1,0 +1,19 @@
+<div class="mt-4 mx-auto">
+  <div class="border-foreground border rounded-md p-4 mb-2 max-w-3xl">
+    <!-- prettier-ignore -->
+    <p class="markdown">
+# FAQ
+Welcome to the FAQ page. Here you can find answers to some common
+questions. If you have a question that is not answered here, please feel
+free to contact us.
+    </p>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+      window.onload = () => {
+        const readme = document.querySelector(".markdown");
+        readme.innerHTML = marked.parse(readme.innerHTML);
+      };
+    </script>
+  </div>
+  {{ template "accordian" (dict "ItemPath" "/static/faq.json") }}
+</div>

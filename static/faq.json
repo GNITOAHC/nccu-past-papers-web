@@ -1,0 +1,14 @@
+{
+  "itemList": [
+    {
+      "id": 0,
+      "summary": "如何貢獻到此專案？",
+      "detail": "網站原始碼在 [GitHub](https://github.com/gnitoahc/nccu-past-papers-web) 上，歡迎任何人參與開發。"
+    },
+    {
+      "id": 1,
+      "summary": "有任何疑問或是 bug 要如何回報？",
+      "detail": "歡迎直接聯繫主要維護者 chaotingchen10@gmail.com，如果有任何建議也非常歡迎聯繫！"
+    }
+  ]
+}
