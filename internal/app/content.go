@@ -36,12 +36,15 @@ func (a *App) ContentHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) uploadFile(w http.ResponseWriter, r *http.Request) {
-	name := r.PostFormValue("name")
 	file, header, err := r.FormFile("file")
+	// name := r.PostFormValue("name")
+	name := header.Filename
 	if err != nil {
 		http.Error(w, "Error getting file: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+	fmt.Println("Uploading file", name)
+	fmt.Println("...", file)
 
 	buf := bytes.NewBuffer(nil)
 	if _, err := io.Copy(buf, file); err != nil {
@@ -82,7 +85,7 @@ func (a *App) uploadFile(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Error creating PR " + err.Error()))
 		return
 	}
-
+	
 	w.Write([]byte("File Uploaded"))
 	return
 }
