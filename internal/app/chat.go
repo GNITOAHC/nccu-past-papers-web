@@ -120,6 +120,7 @@ func (a *App) chatComplete(his []ChatHis, filepath, filename string, ctx context
 			Parts: []genai.Part{
 				genai.FileData{URI: uri},
 				genai.Text("Please answer the following questions according to the content of the file."),
+                genai.Text("Please answer the user's questions in Markdown format."),
 			},
 			Role: "user",
 		},
@@ -149,26 +150,6 @@ func (a *App) chatComplete(his []ChatHis, filepath, filename string, ctx context
 			}
 		}
 	}()
-	return responseChan, nil
-
-	go func() {
-		defer close(responseChan)
-
-		resp, err := cs.SendMessage(ctx, genai.Text(his[len(his)-1].Text))
-		if err != nil {
-			log.Print("Error sending message:", err)
-			return
-		}
-
-		// Process streaming response
-		if resp.Candidates[0].Content != nil {
-			for _, part := range resp.Candidates[0].Content.Parts {
-				// Send each part to the channel
-				responseChan <- fmt.Sprint(part)
-			}
-		}
-	}()
-
 	return responseChan, nil
 }
 
