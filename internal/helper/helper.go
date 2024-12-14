@@ -189,5 +189,5 @@ func (h *Helper) FileReader(path string) (io.Reader, error) {
 		log.Fatalf("Error sending request: %v", err)
 	}
 
-    return res.Body, nil
+	return res.Body, nil
 }

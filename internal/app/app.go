@@ -3,9 +3,11 @@ package app
 import (
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"time"
 
 	"past-papers-web/cache"
@@ -13,6 +15,8 @@ import (
 	"past-papers-web/internal/helper"
 	"past-papers-web/mailer"
 	"past-papers-web/templates"
+
+	"github.com/joho/godotenv"
 )
 
 var (
@@ -20,15 +24,22 @@ var (
 )
 
 type App struct {
-	helper    *helper.Helper
-	config    *config.Config
-	usercache *cache.Cache[string, interface{}] // Cache for users who are logged in
-	filecache *cache.Cache[string, []byte]      // Cache for files from the server
-	chatcache *cache.Cache[string, string]      // Cache for uploaded files to Gemini
-	mailer    *mailer.Mailer
+	helper            *helper.Helper
+	config            *config.Config
+	usercache         *cache.Cache[string, interface{}] // Cache for users who are logged in
+	filecache         *cache.Cache[string, []byte]      // Cache for files from the server
+	chatcache         *cache.Cache[string, string]      // Cache for uploaded files to Gemini
+	mailer            *mailer.Mailer
+	GitHubAccessToken string
 }
 
 func StartServer() {
+	// Load .env file
+	err := godotenv.Load()
+	if err != nil {
+		log.Printf("Warning: Could not load .env file, using system environment variables")
+	}
+
 	// Start the server
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
 	if err != nil {
@@ -51,13 +62,15 @@ func NewApp() *App {
 	filecache := cache.New[string, []byte]()
 	chatcache := cache.New[string, string]()
 	mailer := mailer.New(config.SMTPFrom, config.SMTPPass, config.SMTPHost, config.SMTPPort, 10)
+	token := os.Getenv("GITHUB_ACCESS_TOKEN")
 	return &App{
-		helper:    helper.NewHelper(config),
-		config:    config,
-		usercache: usercache,
-		filecache: filecache,
-		chatcache: chatcache,
-		mailer:    mailer,
+		helper:            helper.NewHelper(config),
+		config:            config,
+		usercache:         usercache,
+		filecache:         filecache,
+		chatcache:         chatcache,
+		mailer:            mailer,
+		GitHubAccessToken: token,
 	}
 }
 
@@ -74,6 +87,7 @@ func (a *App) Routes() http.Handler {
 	mux.HandleFunc("/file/", a.loginProtect(a.FileHandler))
 	mux.HandleFunc("/chat/", a.loginProtect(a.Chat))
 	mux.HandleFunc("/chatep", a.loginProtect(a.ChatEndpoint))
+	mux.HandleFunc("/github-api/", a.ProxyHandler)
 	return mux
 }
 
@@ -106,4 +120,37 @@ func (a *App) loginProtect(next http.HandlerFunc) http.HandlerFunc {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	})
+}
+
+func (a *App) ProxyHandler(w http.ResponseWriter, r *http.Request) {
+	apiURL := "https://api.github.com/" + r.URL.Path[len("/github-api/"):] + "?" + r.URL.RawQuery
+
+	req, err := http.NewRequest(r.Method, apiURL, r.Body)
+	if err != nil {
+		log.Printf("Failed to create request: %v", err)
+		http.Error(w, "Failed to create request", http.StatusInternalServerError)
+		return
+	}
+
+	req.Header.Set("Authorization", "Bearer "+a.GitHubAccessToken)
+	req.Header.Set("Accept", "application/vnd.github.v3+json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Printf("Failed to forward request: %v", err)
+		http.Error(w, "Failed to forward request", http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		log.Printf("GitHub API Error: %d %s", resp.StatusCode, resp.Status)
+		http.Error(w, fmt.Sprintf("GitHub API Error: %d - %s", resp.StatusCode, resp.Status), resp.StatusCode)
+		return
+	}
+
+	w.Header().Set("Content-Type", resp.Header.Get("Content-Type"))
+	w.WriteHeader(resp.StatusCode)
+	io.Copy(w, resp.Body)
 }

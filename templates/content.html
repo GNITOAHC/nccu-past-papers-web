@@ -19,75 +19,69 @@
 
 <script>
   // GitHub API Basic Settings
-  const GITHUB_API_URL = "https://api.github.com";
-  const REPO_OWNER = "GNITOAHC"; // GitHub User Name
-  const REPO_NAME = "nccu-past-papers"; // Repo
-  const BRANCH = "main"; // Branch
-  const TOKEN = "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"; // GitHub Token
+const GITHUB_API_PROXY = "/github-api";
+const REPO_OWNER = "GNITOAHC"; // GitHub User Name
+const REPO_NAME = "nccu-past-papers"; // Repo
+const BRANCH = "main"; // Branch
 
-  document.getElementById("search-button").addEventListener("click", () => {
-    const keyword = document.getElementById("search-input").value.trim();
-    if (!keyword) {
-      alert("Please enter a keyword.");
-      return;
+document.getElementById("search-button").addEventListener("click", () => {
+  const keyword = document.getElementById("search-input").value.trim();
+  if (!keyword) {
+    alert("Please enter a keyword.");
+    return;
+  }
+  searchGitHub(keyword);
+});
+
+// Search GitHub API via backend proxy
+async function searchGitHub(keyword) {
+  const treeApiUrl = `${GITHUB_API_PROXY}/repos/${REPO_OWNER}/${REPO_NAME}/git/trees/${BRANCH}?recursive=1`;
+
+  try {
+    // Send API Request via proxy
+    const response = await fetch(treeApiUrl);
+
+    if (!response.ok) {
+      throw new Error(`GitHub API Error: ${response.status}`);
     }
-    searchGitHub(keyword);
-  });
 
-  // Search GitHub API
-  async function searchGitHub(keyword) {
-    const treeApiUrl = `${GITHUB_API_URL}/repos/${REPO_OWNER}/${REPO_NAME}/git/trees/${BRANCH}?recursive=1`;
+    // Parse API Response
+    const data = await response.json();
 
-    try {
-      // Send API Request
-      const response = await fetch(treeApiUrl, {
-        headers: {
-          Authorization: `token ${TOKEN}`,
-        },
-      });
+    // Search for matching files and directories
+    const results = data.tree.filter((item) =>
+      item.path.toLowerCase().includes(keyword.toLowerCase())
+    );
 
-      if (!response.ok) {
-        throw new Error(`GitHub API Error: ${response.status}`);
-      }
+    // Display Results
+    displayResults(results);
+  } catch (error) {
+    console.error("Search failed:", error);
+    document.getElementById("results").innerHTML =
+      "<p>Search failed, please try again later.</p>";
+  }
+}
 
-      // Parse API Response
-      const data = await response.json();
-
-      // Search for matching files and directories
-      const results = data.tree.filter((item) =>
-        item.path.toLowerCase().includes(keyword.toLowerCase())
-      );
-
-      // Display Results
-      displayResults(results);
-    } catch (error) {
-      console.error("Search failed:", error);
-      document.getElementById("results").innerHTML =
-        "<p>Search failed, please try again later.</p>";
-    }
+// Display Results
+function displayResults(results) {
+  const resultsContainer = document.getElementById("results");
+  if (results.length === 0) {
+    resultsContainer.innerHTML = "<p>No matching results.</p>";
+    return;
   }
 
-
-  // Display Results
-  function displayResults(results) {
-    const resultsContainer = document.getElementById("results");
-    if (results.length === 0) {
-      resultsContainer.innerHTML = "<p>No matching results.</p>";
-      return;
-    }
-
-    // HTML Structure
-    resultsContainer.innerHTML = results
-      .map((item) => {
-        const icon = item.type === "tree" ? "Folder: " : "File: ";
-        return `
-          <div>
-            ${icon} <a href="https://github.com/${REPO_OWNER}/${REPO_NAME}/blob/${BRANCH}/${item.path}" target="_blank">${item.path}</a>
-          </div>
-        `;
-      })
-      .join("");
-  }
+  // HTML Structure
+  resultsContainer.innerHTML = results
+    .map((item) => {
+      const icon = item.type === "tree" ? "Folder: " : "File: ";
+      return `
+        <div>
+          ${icon} <a href="https://github.com/${REPO_OWNER}/${REPO_NAME}/blob/${BRANCH}/${item.path}" target="_blank">${item.path}</a>
+        </div>
+      `;
+    })
+    .join("");
+}
 </script>
 
 <div class="my-4">

@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 
 	"past-papers-web/internal/config"
@@ -28,25 +29,30 @@ type githubEntry struct {
 	Url  string `json:"url"`
 }
 
+type ProxyHelper struct {
+	Client *http.Client
+	Token  string
+}
+
 // BFSSearch performs a breadth-first search for files or directories that contain the specified substring, case insensitive.
 func (t *TreeNode) BFSSearch(substring string) []*TreeNode {
 	var results []*TreeNode
-	queue := []*TreeNode{t} // 使用佇列進行 BFS
+	queue := []*TreeNode{t} // Use a queue for BFS
 
-	// 將搜尋子字串轉為小寫
+	// Convert the search substring to lowercase
 	substringLower := strings.ToLower(substring)
 
 	for len(queue) > 0 {
 		current := queue[0]
-		queue = queue[1:] // 移除已處理的元素
+		queue = queue[1:] // Remove the processed element
 
-		// 將當前節點的名稱和路徑轉為小寫進行比對
+		// Compare the current node's name and path, converted to lowercase
 		if strings.Contains(strings.ToLower(current.Name), substringLower) ||
 			strings.Contains(strings.ToLower(current.Path), substringLower) {
 			results = append(results, current)
 		}
 
-		// 將子節點加入佇列
+		// Add child nodes to the queue
 		for _, child := range current.Children {
 			queue = append(queue, child)
 		}
@@ -55,19 +61,19 @@ func (t *TreeNode) BFSSearch(substring string) []*TreeNode {
 	return results
 }
 
-// 這個處理函數用來處理搜尋請求
+// Handle search requests
 func SearchHandler(w http.ResponseWriter, r *http.Request, root *TreeNode) {
-	// 從 URL 查詢參數中獲取搜尋字串
+	// Retrieve the search string from the URL query parameters
 	query := r.URL.Query().Get("query")
 	if query == "" {
 		http.Error(w, "Missing query parameter", http.StatusBadRequest)
 		return
 	}
 
-	// 使用廣度優先搜尋
+	// Perform BFS
 	results := root.BFSSearch(query)
 
-	// 返回搜尋結果
+	// Return search results
 	w.Header().Set("Content-Type", "application/json")
 	if len(results) == 0 {
 		w.WriteHeader(http.StatusNotFound)
@@ -75,7 +81,7 @@ func SearchHandler(w http.ResponseWriter, r *http.Request, root *TreeNode) {
 		return
 	}
 
-	// 返回搜尋結果作為 JSON 格式
+	// Return JSON
 	json.NewEncoder(w).Encode(results)
 }
 
@@ -177,4 +183,43 @@ func ParseTree(data map[string]interface{}) *TreeNode {
 	}
 
 	return root
+}
+
+func NewProxyHelper() *ProxyHelper {
+	token := os.Getenv("GITHUB_TOKEN")
+	if token == "" {
+		panic("GITHUB_TOKEN is not set in environment variables")
+	}
+	return &ProxyHelper{
+		Client: &http.Client{},
+		Token:  token,
+	}
+}
+
+// HandleProxyRequest proxies GitHub API requests
+func (p *ProxyHelper) HandleProxyRequest(w http.ResponseWriter, r *http.Request) {
+	// Construct the GitHub API request URL
+	apiURL := "https://api.github.com" + r.URL.Path[len("/github-api"):] + "?" + r.URL.RawQuery
+
+	// Create a new request
+	req, err := http.NewRequest(r.Method, apiURL, r.Body)
+	if err != nil {
+		http.Error(w, "Failed to create request", http.StatusInternalServerError)
+		return
+	}
+	req.Header.Set("Authorization", "Bearer "+p.Token)
+	req.Header.Set("Accept", "application/vnd.github.v3+json")
+
+	// Send the request
+	resp, err := p.Client.Do(req)
+	if err != nil {
+		http.Error(w, "Failed to forward request", http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	// Set response headers and return data
+	w.Header().Set("Content-Type", resp.Header.Get("Content-Type"))
+	w.WriteHeader(resp.StatusCode)
+	io.Copy(w, resp.Body)
 }
