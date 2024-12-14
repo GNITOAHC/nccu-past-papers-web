@@ -150,6 +150,18 @@
       );
       lucide.createIcons();
     })();
+    document.getElementById("fd-btn").onclick = async ()=>{
+      window.alert('Sending feedback...')
+      const feedback = document.getElementById("fd-content").value
+      const response = await fetch('/feedback', { method: 'POST', body: JSON.stringify({content: feedback})})
+      if (!response.ok) {
+        console.error('Failed to send')
+        window.alert('Failed to send')
+        return
+      }
+      window.alert("Thanks for your feedback")
+      window.location.reload()
+    }
   </script>
 </header>
 {{ end }}
