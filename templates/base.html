@@ -89,6 +89,38 @@
       >
         <i data-lucide="github"></i>
       </a>
+      <div x-data="{ modal: false }">
+        <button x-data @click="modal = true"
+        class="bg-white text-black px-2.5 py-2.5 rounded-md shadow ml-2">
+        <i data-lucide="message-square"></i>
+        </button>
+        <div 
+          x-show="modal" 
+          x-transition
+          class="fixed inset-0 z-30 flex items-end justify-center bg-black/20 p-4 pb-8 sm:items-center lg:p-8" role="dialog" aria-modal="true" aria-labelledby="defaultModalTitle">
+          <div x-show="modal" x-transition:enter="transition ease-out duration-200 delay-100 motion-reduce:transition-opacity" x-transition:enter-start="opacity-0 scale-50" x-transition:enter-end="opacity-100 scale-100" class="flex max-w-lg flex-col gap-4 overflow-hidden rounded-md border border-neutral-300 bg-white text-neutral-600 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300">
+            <div class="flex items-center justify-between border-b border-neutral-300 bg-neutral-50/60 p-4 dark:border-neutral-700 dark:bg-neutral-950/20">
+              <h3 class="font-semibold tracking-wide text-neutral-900 dark:text-white">Feedback form</h3>
+              <button @click="modal = false">
+                <i data-lucide="x"></i>
+              </button>
+            </div>
+            <div class="px-4 py-8">
+              <p>Let us know what you think about our website!</p>
+              <input 
+                id="fd-content"
+                type="text"
+                class="my-2 w-full p-1 border border-gray-200 rounded-lg"
+              >
+              <button
+                id="fd-btn"
+                type="submit"
+                class="hidden md:block px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 active:scale-95 transition-all"
+              >send</button>
+            </div>
+          </div>
+        <div>
+      </div>
     </div>
   </div>
   <script>
