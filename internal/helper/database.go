@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"strings"
+	"net/http"
 )
 
 /*
@@ -148,4 +149,23 @@ func (h *Helper) RegisterUser(mail string, name string, studentId string) bool {
 		return false
 	}
 	return true
+}
+
+type FeedBack struct{
+    Content string `json:"content"`
+}
+
+func (h *Helper) SendFeedback(w http.ResponseWriter, r *http.Request){
+    if r.Method != http.MethodPost {
+        http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+        return
+    }
+    var feedback FeedBack
+    err := json.NewDecoder(r.Body).Decode(&feedback)
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusBadRequest)
+        return
+    }
+
+    log.Printf(feedback.Content)
 }
