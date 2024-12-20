@@ -980,10 +980,6 @@ body {
   height: 2.5rem;
 }
 
-.h-20 {
-  height: 5rem;
-}
-
 .h-4 {
   height: 1rem;
 }
@@ -1022,6 +1018,10 @@ body {
 
 .min-h-28 {
   min-height: 7rem;
+}
+
+.min-h-80 {
+  min-height: 20rem;
 }
 
 .min-h-\[16rem\] {
@@ -1663,6 +1663,11 @@ body {
 .hover\:bg-slate-200:hover {
   --tw-bg-opacity: 1;
   background-color: rgb(226 232 240 / var(--tw-bg-opacity));
+}
+
+.hover\:text-blue-500:hover {
+  --tw-text-opacity: 1;
+  color: rgb(59 130 246 / var(--tw-text-opacity));
 }
 
 .hover\:text-gray-400:hover {
