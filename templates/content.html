@@ -11,16 +11,14 @@
 </div>
 {{ end }}
 
+<!-- prettier-ignore -->
 <div class="my-4">
-  <!-- prettier-ignore -->
   {{ $path := .Path }} {{ $parts := split .Path "/" }}
 
   <!-- Initialize empty arrays for Names and Links -->
-  <!-- prettier-ignore -->
   {{ $names := slice }} {{ $links := slice }}
 
   <!-- Create links and names from the path -->
-  <!-- prettier-ignore -->
   {{ $currentLink := "/" }}
 
   {{ range $idx, $part := $parts }}
@@ -37,8 +35,6 @@
 
   {{ template "breadcrumb" (dict "Names" $names "Links" $links) }}
 </div>
-
-<!-- -->
 
 <ul
   class="border divide-y divide-border border-border rounded-lg first-of-type:rounded-t-lg mb-4"
@@ -70,46 +66,3 @@
 <script>
   lucide.createIcons();
 </script>
-
-<form id="upload-form" class="h-20" enctype="multipart/form-data">
-  <input type="text" name="name" placeholder="Name" />
-  <input type="file" name="file" placeholder="File Input" />
-  <button type="submit">Add</button>
-</form>
-{{ template "upload-script" }} {{ template "upload-modal" }}
-<!-- -->
-
-<!-- -->
-
-{{ define "upload-script" }}
-<script>
-  const uploadForm = document.getElementById("upload-form");
-  uploadForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const uploadM = new bootstrap.Modal(
-      document.getElementById("upload-modal")
-    );
-    uploadM.show();
-    document.getElementById("upload-modal-body").innerHTML = "Loading...";
-    const formData = new FormData(uploadForm);
-    const res = await fetch(window.location.href, {
-      method: "POST",
-      body: formData,
-    });
-    const message = await res.text();
-    document.getElementById("upload-modal-body").innerHTML = message;
-  });
-</script>
-{{ end }}
-
-<!-- -->
-
-{{ define "upload-modal" }}
-<div class="modal fade" id="upload-modal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered" id="upload-modal-dialog">
-    <div class="modal-content">
-      <div class="modal-body" id="upload-modal-body"></div>
-    </div>
-  </div>
-</div>
-{{ end }}
