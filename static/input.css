@@ -11,7 +11,7 @@
     --secondary: #111827;
     --secondary-light: #374151;
     --border: #2b374d;
-    --muted: #767A8A;
+    --muted: #767a8a;
   }
 
   .light {
@@ -29,6 +29,13 @@
 }
 
 @layer components {
+  .input {
+    @apply focus:outline-none focus:ring-0 px-3 py-2 rounded-lg border border-gray-200 bg-white shadow-sm w-full placeholder-gray-400;
+  }
+  .input:disabled {
+    @apply bg-secondary text-secondary-light cursor-not-allowed;
+  }
+
   .prose {
     h1:not(h1.not-prose, .not-prose h1) {
       @apply scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl;

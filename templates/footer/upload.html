@@ -1,0 +1,108 @@
+<div x-data="{deptQuery: '', prof: '', classname: ''}" class="w-full">
+  <div class="w-full justify-center">
+    <div
+      x-data="dragDropFiles()"
+      class="w-full max-w-3x1 mt-4 p-8 bg-white shadow-lg rounded-lg"
+    >
+      <h2 class="text-2xl font-bold text-center mb-4">Upload Your File</h2>
+
+      <div class="flex gap-x-3 mb-4">
+        <!-- prettier-ignore -->
+        {{ template "combobox" (dict 
+          "ItemPath" "/static/depts.json" "QueryName" "deptQuery" "Placeholder" "系所" "AllowArbitrary" "true" "ArbitraryDisplay" "---新增系所---"
+        )}}
+        <input class="input" placeholder="教師名" x-model="prof" />
+        <input class="input" placeholder="課名" x-model="classname" />
+      </div>
+
+      <div
+        x-bind:class="{'bg-blue-100 border-blue-400': isDragging, 'bg-gray-100 border-gray-300': !isDragging}"
+        class="flex flex-col justify-center border-2 border-dashed rounded-lg p-6 text-center relative min-h-80"
+        @dragover.prevent="isDragging = true"
+        @dragleave="isDragging = false"
+        @drop.prevent="handleDrop($event)"
+        @click="files.length ? await uploadFiles() : $refs.fileInput.click()"
+      >
+        <p class="text-gray-400" x-show="!files.length">
+          Drag &amp; Drop files here or click to select
+        </p>
+        <ul class="gap-y-2">
+          <template x-for="(file, index) in files" :key="file.name">
+            <li class="text-sm font-medium">
+              <span x-text="file.name"></span>
+            </li>
+          </template>
+        </ul>
+      </div>
+
+      <input
+        type="file"
+        class="hidden"
+        @change="handleFiles($event)"
+        multiple
+        x-ref="fileInput"
+      />
+
+      <button
+        x-show="files.length"
+        x-text="isUploading ? 'Uploading...' : 'Upload Files'"
+        @click="
+          if (!deptQuery || !prof || !classname) {
+            alert('Please fill in all fields');
+            return;
+          }
+          uploadFiles(deptQuery + '/' + classname + '_' + prof)
+        "
+        class="w-full mt-4 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-md"
+      ></button>
+    </div>
+
+    <script>
+      function dragDropFiles() {
+        return {
+          isDragging: false,
+          isUploading: false,
+          files: [],
+          results: [],
+          handleDrop(event) {
+            this.isDragging = false;
+            this.files = [...event.dataTransfer.files];
+          },
+          handleFiles(event) {
+            this.files = [...event.target.files];
+          },
+          removeFile(index) {
+            this.files.splice(index, 1);
+          },
+          async uploadFiles(path) {
+            const formData = new FormData();
+            const filesCopy = [...this.files];
+            for (const file of filesCopy) {
+              if (file) {
+                formData.append("file", file);
+                console.log(
+                  `File Name: ${file.name}, Size: ${file.size} bytes`
+                );
+              }
+            }
+            formData.append("path", path);
+            this.isUploading = true;
+            let response = await fetch("/api/upload", {
+              method: "POST",
+              body: formData,
+            });
+            if (!response.ok) {
+              window.alert(await response.text());
+              this.isUploading = false;
+              return;
+            }
+            const data = await response.text();
+            console.log(data);
+            this.files = []; // Clear files list after upload
+            this.isUploading = false;
+          },
+        };
+      }
+    </script>
+  </div>
+</div>
