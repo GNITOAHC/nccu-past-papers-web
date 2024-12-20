@@ -3,17 +3,28 @@
   x-data="{
         selected: null,
         items: [],
+        arbitraryDisplay: '{{ .ArbitraryDisplay }}' == '' ? 'Add new item' : '{{ .ArbitraryDisplay }}',
+        allowArbitrary: '{{ .AllowArbitrary }}' == 'true',
         get filteredItems() {
-        return {{ .QueryName }} === ''
+          const queryLower = {{ .QueryName }}.toLowerCase();
+          const filtered = {{ .QueryName }} === ''
                 ? this.items
                 : this.items.filter((item) => {
-                    return item.name.toLowerCase().includes(this.query.toLowerCase())
+                    item.name.toLowerCase().includes({{ .QueryName }}.toLowerCase())
                 })
+          if (!this.allowArbitrary) return filtered
+
+          if ({{.QueryName }} !== '' && !filtered.some(item => item.name.toLowerCase() === queryLower)) {
+            return [this.items[this.items.length - 1]]
+          }
+          return filtered;
         },
     }"
   x-init="
     i = await (await fetch('{{ .ItemPath }}')).json()
     items = i.itemList
+    if (allowArbitrary)
+      items.push({ id: items.length + 1, name: arbitraryDisplay })
   "
   class="max-w-xs w-full"
 >
@@ -24,6 +35,7 @@
       <input
         x-combobox:input
         :display-value="items => {
+          if (items.name == arbitraryDisplay) return {{ .QueryName }}
           {{ .QueryName }} = items.name
           return items.name
         }"

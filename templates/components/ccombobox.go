@@ -7,7 +7,9 @@ type ComboBox struct {
 	//     {"id": 0, name": "Item 1", "disabled": false}
 	//   ]
 	// }
-	ItemPath    string
-	QueryName   string
-	Placeholder string
+	ItemPath         string
+	QueryName        string
+	Placeholder      string
+	ArbitraryDisplay string // Default is 'Add new item'
+	AllowArbitrary   string // Default is 'false' (either 'true' or 'false')
 }
