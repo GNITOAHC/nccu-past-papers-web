@@ -15,6 +15,8 @@ func (a *App) FileHandler(w http.ResponseWriter, r *http.Request) {
 		".png":  "image/png",
 		".jpg":  "image/jpeg",
 		".jpeg": "image/jpeg",
+		".txt":  "text/plain; charset=utf-8",
+		".md":   "text/plain; charset=utf-8",
 	}
 
 	contentType := ""
@@ -25,8 +27,9 @@ func (a *App) FileHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if contentType == "" {
-		http.Error(w, "Content type not specified or supported", http.StatusNotFound)
-		return
+		// http.Error(w, "Content type not specified or supported", http.StatusNotFound)
+		// return
+		contentType = "application/octet-stream"
 	}
 
 	var file []byte
