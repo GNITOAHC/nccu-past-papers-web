@@ -80,11 +80,15 @@ func (a *App) Routes() http.Handler {
 	mux.HandleFunc("/chatep", a.loginProtect(a.ChatEndpoint))
 	mux.HandleFunc("/footer/upload", func(w http.ResponseWriter, r *http.Request) {
 		templates.Render(w, "footer/upload.html", nil)
-    })
+	})
 	mux.HandleFunc("/footer/faq", func(w http.ResponseWriter, r *http.Request) {
 		templates.Render(w, "footer/faq.html", nil)
 	})
-    mux.HandleFunc("POST /api/upload", a.uploadFiles)
+	mux.HandleFunc("POST /api/upload", a.uploadFiles)
+	mux.HandleFunc("GET /footer/feedback", func(w http.ResponseWriter, r *http.Request) {
+		templates.Render(w, "footer/feedback.html", nil)
+	})
+	mux.HandleFunc("POST /footer/feedback", a.Feedback)
 	return mux
 }
 
