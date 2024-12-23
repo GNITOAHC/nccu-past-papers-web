@@ -19,7 +19,7 @@
   <form
     method="post"
     action=""
-    class="inline-flex gap-2 justify-center w-80"
+    class="inline-flex gap-2 items-center w-80"
     enctype="multipart/form-data"
   >
     <input
@@ -27,7 +27,7 @@
       name="email"
       placeholder="example@example.com"
       autocomplete="email"
-      class="w-full max-w-md p-2 border border-gray-300 rounded-lg h-8 focus:outline-none focus:ring-1 focus:ring-blue-500"
+      class="input"
     />
     <button
       type="submit"
@@ -79,14 +79,19 @@
         x-ref="{{ index $name $i }}"
         placeholder="{{ index $placeholder $i }}"
         autocomplete="{{ index $autocomplete $i }}"
-        class="w-full max-w-md p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
+        class="input"
       />
     </div>
     {{ end }}
 
-    <button type="submit" x-on:click="wait = true">Register</button>
-
-    <div class="flex w-full content-end">
+    <div class="flex flex-col items-end">
+      <button
+        type="submit"
+        x-on:click="wait = true"
+        class="hidden md:block border border-gray-300 rounded-lg h-8 px-2"
+      >
+        Register
+      </button>
       <button type="button" x-on:click="login = true" class="cursor-pointer">
         Have an account? Login
       </button>
