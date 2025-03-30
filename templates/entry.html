@@ -1,13 +1,16 @@
 <div style="padding-left: 6rem; padding-right: 6rem; padding-top: 15%">
   <div x-data="{ login: true, modalOpen: false, email: '', wait: false }">
     <h1 class="mb-4 flex justify-center text-4xl" x-show="login">Login</h1>
-    <h1 class="mb-4 flex justify-center text-4xl" x-show="!login">Register</h1>
+    <h1 class="mb-4 flex justify-center text-4xl" x-show="!login" x-cloak>
+      Register
+    </h1>
     <!-- prettier-ignore -->
     {{ template "login-form" }} {{ template "register-form" }}
     {{ template "otp-modal" }}
     <div
       class="absolute h-screen w-screen top-0 left-0 bg-gray-500/30 backdrop-blur-sm"
       x-show="wait"
+      x-cloak
     ></div>
   </div>
 </div>
@@ -53,7 +56,7 @@
 <!-- -->
 
 {{ define "register-form" }}
-<div class="flex w-full justify-center" x-show="!login">
+<div class="flex w-full justify-center" x-show="!login" x-cloak>
   <form
     class="content-center w-80"
     id="register-form"
@@ -105,6 +108,7 @@
 {{ define "otp-modal" }}
 <div
   x-show="modalOpen"
+  x-cloak
   x-transition
   class="absolute h-screen w-screen top-0 left-0 bg-gray-500/30 backdrop-blur-sm flex items-center justify-center"
   id="otp-modal"
