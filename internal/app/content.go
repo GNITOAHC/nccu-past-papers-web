@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"sort"
+	"strings"
 
 	"past-papers-web/internal/helper"
 	"past-papers-web/templates"
@@ -19,6 +20,38 @@ type contentItem struct {
 	IsTree   bool
 }
 
+func (a *App) DownloadZip(w http.ResponseWriter, r *http.Request) {
+	url := "https://api.github.com/repos/GNITOAHC/nccu-past-papers/zipball/main"
+
+	// print("DownloadZip function called")
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		http.Error(w, "Error creating request: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	req.Header.Set("Authorization", "Bearer "+a.config.GitHubAccessToken)
+	req.Header.Set("Accept", "application/vnd.github+json")
+	req.Header.Set("X-GitHub-Api-Version", "2022-11-28")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		http.Error(w, "Error downloading zip: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	w.Header().Set("Content-Disposition", "attachment; filename=past-papers-archieve.zip")
+	w.Header().Set("Content-Type", "application/zip")
+
+	_, err = io.Copy(w, resp.Body)
+	if err != nil {
+		http.Error(w, "Error writing zip to response: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
 func (a *App) ContentHandler(w http.ResponseWriter, r *http.Request) {
 	urlpath := r.URL.Path[len("/content/"):]
 
@@ -27,6 +60,9 @@ func (a *App) ContentHandler(w http.ResponseWriter, r *http.Request) {
 		a.uploadFile(w, r)
 		return
 	case http.MethodGet:
+		if strings.HasSuffix(urlpath, "/download-zip") {
+			a.DownloadZip(w, r)
+		}
 		a.GetContent(w, r, urlpath) // Else handle content page
 		return
 	default:
@@ -152,7 +188,7 @@ outer:
 	// 	"HasReadme": hasreadme,
 	// 	"Readme":    readme,
 	// })
-    // log.Println(items)
+	// log.Println(items)
 	templates.Render(w, "content.html", map[string]interface{}{
 		"Path":      "content" + urlpath,
 		"Items":     items,
