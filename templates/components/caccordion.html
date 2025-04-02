@@ -22,15 +22,15 @@
             },
         }"
         x-model="expanded"
-        class="block border-b border-gray-800/10 pb-4 pt-4 first:pt-0 last:border-b-0 last:pb-0"
+        class="block border-b border-foreground/10 pb-4 pt-4 first:pt-0 last:border-b-0 last:pb-0 text-foreground"
       >
         <!-- Disclosure Button -->
         <button
           x-disclosure:button
           type="button"
-          class="group flex w-full items-center justify-between text-left font-medium text-gray-800"
+          class="group flex w-full items-center justify-between text-left font-medium text-foreground"
         >
-          <span class="flex-1" x-text="item.summary"></span>
+          <span class="flex-1 text-foreground" x-text="item.summary"></span>
 
           <!-- Heroicons mini chevron-up: x-show="$disclosure.isOpen" -->
           {{ template "chevron-up" }}
