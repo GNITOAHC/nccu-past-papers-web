@@ -1,6 +1,87 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+@theme {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-secondary-light: var(--secondary-light);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
+}
+
+/*
+  The default border color has changed to `currentColor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentColor);
+  }
+}
+
+@utility input {
+  @apply focus:outline-hidden focus:ring-0 px-3 py-2 rounded-lg border border-gray-200 bg-white shadow-xs w-full placeholder-gray-400;
+  &:disabled {
+    @apply bg-secondary text-secondary-light cursor-not-allowed;
+  }
+}
+
+@utility prose {
+  h1:not(h1.not-prose, .not-prose h1) {
+    @apply scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl;
+  }
+  h2:not(h2.not-prose, .not-prose h2) {
+    @apply mt-10 scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight transition-colors first:mt-0 mb-2;
+  }
+  h3:not(.not-prose h3, .not-prose h3) {
+    @apply mt-8 scroll-m-20 text-2xl font-semibold tracking-tight;
+  }
+  h4:not(.not-prose h4, .not-prose h4) {
+    @apply scroll-m-20 text-xl font-semibold tracking-tight;
+  }
+  p:not(p.not-prose, .not-prose p) {
+    @apply leading-7 not-first:mt-6;
+  }
+  blockquote:not(blockquote.not-prose, .not-prose blockquote) {
+    @apply mt-6 border-l-2 pl-6 italic;
+  }
+  table:not(table.not-prose, .not-prose table) {
+    @apply w-full;
+  }
+  tr:not(tr.not-prose, .not-prose tr) {
+    @apply m-0 border-t p-0 even:bg-muted;
+  }
+  th:not(th.not-prose, .not-prose th) {
+    @apply border px-4 py-2 text-left font-bold [&[align=center]]:text-center [&[align=right]]:text-right;
+  }
+  td:not(td.not-prose, .not-prose td) {
+    @apply border px-4 py-2 text-left [&[align=center]]:text-center [&[align=right]]:text-right;
+  }
+  ul:not(ul.not-prose, .not-prose ul) {
+    @apply my-6 ml-6 list-disc [&>li]:mt-2;
+  }
+  ol:not(ol.not-prose, .not-prose ol) {
+    @apply my-6 ml-6 list-decimal [&>li]:mt-2;
+  }
+  pre:not(pre.not-prose, .not-prose pre) {
+    @apply w-full overflow-y-scroll bg-[#1d283a] text-white rounded-sm py-2 px-4 mb-4 mt-6;
+  }
+  a:not(a.not-prose, .not-prose a) {
+    @apply hover:text-sky-200 underline;
+  }
+  /* code { */
+  /*   @apply relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold; */
+  /* } */
+}
 
 @layer base {
   :root,
@@ -25,63 +106,6 @@
 @layer base {
   body {
     @apply bg-background text-foreground;
-  }
-}
-
-@layer components {
-  .input {
-    @apply focus:outline-none focus:ring-0 px-3 py-2 rounded-lg border border-gray-200 bg-white shadow-sm w-full placeholder-gray-400;
-  }
-  .input:disabled {
-    @apply bg-secondary text-secondary-light cursor-not-allowed;
-  }
-
-  .prose {
-    h1:not(h1.not-prose, .not-prose h1) {
-      @apply scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl;
-    }
-    h2:not(h2.not-prose, .not-prose h2) {
-      @apply mt-10 scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight transition-colors first:mt-0 mb-2;
-    }
-    h3:not(.not-prose h3, .not-prose h3) {
-      @apply mt-8 scroll-m-20 text-2xl font-semibold tracking-tight;
-    }
-    h4:not(.not-prose h4, .not-prose h4) {
-      @apply scroll-m-20 text-xl font-semibold tracking-tight;
-    }
-    p:not(p.not-prose, .not-prose p) {
-      @apply leading-7 [&:not(:first-child)]:mt-6;
-    }
-    blockquote:not(blockquote.not-prose, .not-prose blockquote) {
-      @apply mt-6 border-l-2 pl-6 italic;
-    }
-    table:not(table.not-prose, .not-prose table) {
-      @apply w-full;
-    }
-    tr:not(tr.not-prose, .not-prose tr) {
-      @apply m-0 border-t p-0 even:bg-muted;
-    }
-    th:not(th.not-prose, .not-prose th) {
-      @apply border px-4 py-2 text-left font-bold [&[align=center]]:text-center [&[align=right]]:text-right;
-    }
-    td:not(td.not-prose, .not-prose td) {
-      @apply border px-4 py-2 text-left [&[align=center]]:text-center [&[align=right]]:text-right;
-    }
-    ul:not(ul.not-prose, .not-prose ul) {
-      @apply my-6 ml-6 list-disc [&>li]:mt-2;
-    }
-    ol:not(ol.not-prose, .not-prose ol) {
-      @apply my-6 ml-6 list-decimal [&>li]:mt-2;
-    }
-    pre:not(pre.not-prose, .not-prose pre) {
-      @apply w-full overflow-y-scroll bg-[#1d283a] text-white rounded py-2 px-4 mb-4 mt-6;
-    }
-    a:not(a.not-prose, .not-prose a) {
-      @apply hover:text-sky-200 underline;
-    }
-    /* code { */
-    /*   @apply relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold; */
-    /* } */
   }
 }
 
