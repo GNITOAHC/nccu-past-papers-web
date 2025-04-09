@@ -3,7 +3,7 @@ package mail
 import (
 	"bytes"
 	"html/template"
-	"past-papers-web/mailer"
+	"past-papers-web/pkg/mailer"
 )
 
 func SendMail(m *mailer.Mailer, data map[string]interface{}, title string, tmpl, to []string) error {

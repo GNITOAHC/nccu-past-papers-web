@@ -8,10 +8,10 @@ import (
 	"net/http"
 	"time"
 
-	"past-papers-web/cache"
+	"past-papers-web/pkg/cache"
 	"past-papers-web/internal/config"
 	"past-papers-web/internal/helper"
-	"past-papers-web/mailer"
+	"past-papers-web/pkg/mailer"
 	"past-papers-web/templates"
 )
 

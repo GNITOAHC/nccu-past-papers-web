@@ -2,7 +2,7 @@ package mailer
 
 import (
 	"os"
-	"past-papers-web/dotenv"
+	"past-papers-web/pkg/dotenv"
 	"testing"
 	"time"
 )

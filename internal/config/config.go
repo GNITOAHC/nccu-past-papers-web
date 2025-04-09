@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"past-papers-web/dotenv"
+	"past-papers-web/pkg/dotenv"
 )
 
 type Config struct {
