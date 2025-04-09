@@ -42,14 +42,14 @@ func (a *App) DownloadZip(w http.ResponseWriter, r *http.Request) {
 	}
 	defer resp.Body.Close()
 
-	w.Header().Set("Content-Disposition", "attachment; filename=past-papers-archieve.zip")
-	w.Header().Set("Content-Type", "application/zip")
-
-	_, err = io.Copy(w, resp.Body)
-	if err != nil {
+	var buf bytes.Buffer
+	if _, err := io.Copy(&buf, resp.Body); err != nil {
 		http.Error(w, "Error writing zip to response: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+	w.Header().Set("Content-Disposition", "attachment; filename=past-papers-archieve.zip")
+	w.Header().Set("Content-Type", "application/zip")
+	w.Write(buf.Bytes())
 }
 
 func (a *App) ContentHandler(w http.ResponseWriter, r *http.Request) {
