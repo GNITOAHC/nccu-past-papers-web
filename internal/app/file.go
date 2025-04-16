@@ -3,12 +3,15 @@ package app
 import (
 	"bytes"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"time"
 )
 
 func (a *App) FileHandler(w http.ResponseWriter, r *http.Request) {
+	userMail, _ := r.Cookie("email")
+    log.Println("Dowload file request from user: ", userMail.Value, "; URL: ", r.URL.Path)
 	urlpath := r.URL.Path[len("/file/"):]
 	fileContent := map[string]string{
 		".pdf":  "application/pdf",

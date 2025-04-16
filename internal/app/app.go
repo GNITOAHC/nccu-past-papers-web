@@ -75,7 +75,7 @@ func (a *App) Routes() http.Handler {
 	mux.HandleFunc("/register", a.Register)
 	mux.HandleFunc("/verify-otp", a.VerifyOTP)
 	mux.HandleFunc("/content/", a.ContentHandler)
-	mux.HandleFunc("GET /download-zip", a.DownloadZip)
+	mux.HandleFunc("GET /download-zip", a.loginProtect(a.DownloadZip))
 	mux.HandleFunc("/file/", a.loginProtect(a.FileHandler))
 	mux.HandleFunc("/chat/", a.loginProtect(a.Chat))
 	mux.HandleFunc("/chatep", a.loginProtect(a.ChatEndpoint))

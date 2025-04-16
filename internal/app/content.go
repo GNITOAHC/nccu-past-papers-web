@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"sort"
 	"strings"
@@ -21,6 +22,9 @@ type contentItem struct {
 }
 
 func (a *App) DownloadZip(w http.ResponseWriter, r *http.Request) {
+	userMail, err := r.Cookie("email")
+	log.Println("Download zip request from user: ", userMail.Value)
+
 	url := "https://api.github.com/repos/GNITOAHC/nccu-past-papers/zipball/main"
 
 	// print("DownloadZip function called")

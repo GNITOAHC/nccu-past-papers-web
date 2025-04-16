@@ -2,6 +2,7 @@ package app
 
 import (
 	"crypto/rand"
+	"log"
 	"math/big"
 	"net/http"
 	"past-papers-web/templates"
@@ -102,7 +103,7 @@ func (a *App) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 	email := r.FormValue("email")
 	otp := r.FormValue("otp")
 	if email == "" || otp == "" {
-		print("Missing Email or OTP")
+        log.Println("Missing Email or OTP; user: ", email, "; otp: ", otp)
 		http.Error(w, "Missing Email or OTP", http.StatusBadRequest)
 		return
 	}

@@ -100,7 +100,7 @@ func NewTemplates() {
 					panic(err)
 				}
 
-				print(path, " loaded\n")
+				// print(path, " loaded\n")
 			}
 		}
 
