@@ -6,13 +6,13 @@
     >
       <h2 class="text-2xl font-bold text-center mb-4">Upload Your File</h2>
 
-      <div class="flex gap-x-3 mb-4">
+      <div class="flex flex-col md:flex-row items-center gap-x-3 mb-4">
         <!-- prettier-ignore -->
         {{ template "combobox" (dict 
           "ItemPath" "/static/depts.json" "QueryName" "deptQuery" "Placeholder" "系所" "AllowArbitrary" "true" "ArbitraryDisplay" "---新增系所---"
         )}}
-        <input class="input" placeholder="教師名" x-model="prof" />
-        <input class="input" placeholder="課名" x-model="classname" />
+        <input class="input max-w-sm" placeholder="教師名" x-model="prof" />
+        <input class="input max-w-sm" placeholder="課名" x-model="classname" />
       </div>
 
       <div
