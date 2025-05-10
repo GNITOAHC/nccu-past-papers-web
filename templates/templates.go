@@ -5,7 +5,6 @@ import (
 	"embed"
 	"fmt"
 	"html/template"
-	"io/fs"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -45,24 +44,6 @@ var funcMap = template.FuncMap{
 		return []string{}
 	},
 	// Add more functions as needed
-}
-
-func _NewTemplates() {
-	tmpl = template.New("").Funcs(funcMap)
-
-	var paths []string
-	fs.WalkDir(resources, ".", func(path string, d fs.DirEntry, err error) error {
-		if strings.Contains(d.Name(), ".html") {
-			paths = append(paths, path)
-		}
-		return nil
-	})
-
-	// log.Println(paths)
-
-    // https://stackoverflow.com/questions/38686583/golang-parse-all-templates-in-directory-and-subdirectories
-
-	tmpl = template.Must(tmpl.ParseFS(resources, paths...))
 }
 
 // NewTemplates loads all templates from the templates directory and this must succeed
@@ -142,4 +123,10 @@ func Render(w http.ResponseWriter, name string, data interface{}) {
 
 	w.Header().Set("Content-Type", "text/html; charset=UTF-8")
 	buffer.WriteTo(w)
+}
+
+func HandleStatic(name string, data interface{}) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		Render(w, name, data)
+	}
 }

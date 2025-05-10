@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"time"
 
-	"past-papers-web/pkg/cache"
 	"past-papers-web/internal/config"
 	"past-papers-web/internal/helper"
+	"past-papers-web/pkg/cache"
 	"past-papers-web/pkg/mailer"
 	"past-papers-web/templates"
 )
@@ -70,7 +70,7 @@ func (a *App) Routes() http.Handler {
 	mux.HandleFunc("/static/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, r.URL.Path[1:])
 	})
-	a.RegisterAdminRoutes("/admin", mux)
+	mux.Handle("/admin/", http.StripPrefix("/admin", a.AdminRoutes()))
 	mux.HandleFunc("/refresh-tree", a.RefreshTree)
 	mux.HandleFunc("/register", a.Register)
 	mux.HandleFunc("/verify-otp", a.VerifyOTP)
@@ -78,17 +78,12 @@ func (a *App) Routes() http.Handler {
 	mux.HandleFunc("GET /download-zip", a.loginProtect(a.DownloadZip))
 	mux.HandleFunc("/file/", a.loginProtect(a.FileHandler))
 	mux.HandleFunc("/chat/", a.loginProtect(a.Chat))
-	mux.HandleFunc("/chatep", a.loginProtect(a.ChatEndpoint))
-	mux.HandleFunc("/footer/upload", func(w http.ResponseWriter, r *http.Request) {
-		templates.Render(w, "footer/upload.html", nil)
-	})
-	mux.HandleFunc("/footer/faq", func(w http.ResponseWriter, r *http.Request) {
-		templates.Render(w, "footer/faq.html", nil)
-	})
 	mux.HandleFunc("POST /api/upload", a.uploadFiles)
-	mux.HandleFunc("GET /footer/feedback", func(w http.ResponseWriter, r *http.Request) {
-		templates.Render(w, "footer/feedback.html", nil)
-	})
+
+	// Footer routes
+	mux.HandleFunc("/footer/upload", templates.HandleStatic("footer/upload.html", nil))
+	mux.HandleFunc("/footer/faq", templates.HandleStatic("footer/faq.html", nil))
+	mux.HandleFunc("/footer/feedback", templates.HandleStatic("footer/feedback.html", nil))
 	mux.HandleFunc("POST /footer/feedback", a.Feedback)
 	return mux
 }

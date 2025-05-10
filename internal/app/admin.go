@@ -30,22 +30,20 @@ func (a *App) adminProtect(next http.HandlerFunc) http.HandlerFunc {
 	})
 }
 
-func (a *App) RegisterAdminRoutes(prefix string, mux *http.ServeMux) {
-	mux.HandleFunc(prefix+"/", a.adminProtect(a.loginProtect(a.Admin)))
-	// mux.HandleFunc(prefix+"/", a.loginProtect(a.Admin)) // For testing process
-	// mux.HandleFunc(prefix+"/", a.Admin) // For testing process
-	mux.HandleFunc(prefix+"/approve", a.adminProtect(a.loginProtect(a.ApproveRegistration)))
-	// mux.HandleFunc(prefix+"/approve", a.ApproveRegistration) // For testing process
-	return
+func (a *App) AdminRoutes() http.Handler {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", a.adminProtect(a.loginProtect(a.Admin)))
+	// mux.HandleFunc("/", a.loginProtect(a.Admin)) // For testing process
+	// mux.HandleFunc("/", a.Admin)                 // For testing process
+	mux.HandleFunc("/approve", a.adminProtect(a.loginProtect(a.ApproveRegistration)))
+	// mux.HandleFunc("/approve", a.ApproveRegistration) // For testing process
+	return mux
 }
 
 func (a *App) Admin(w http.ResponseWriter, r *http.Request) {
 	templates.Render(w, "admin.html", map[string]interface{}{
 		"WaitingList": a.helper.GetWaitingList(),
 	})
-	// a.tmplExecute(w, []string{"templates/admin.html"}, map[string]interface{}{
-	// 	"WaitingList": a.helper.GetWaitingList(),
-	// })
 }
 
 // ApproveRegistration approves the registration of the user.
