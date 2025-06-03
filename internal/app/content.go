@@ -186,18 +186,10 @@ outer:
 	if urlpath != "" {
 		urlpath = "/" + urlpath
 	}
-	// a.tmplExecute(w, []string{"templates/content.html"}, map[string]interface{}{
-	// 	"Path":      "content" + urlpath,
-	// 	"Items":     items,
-	// 	"HasReadme": hasreadme,
-	// 	"Readme":    readme,
-	// })
-	// log.Println(items)
 	templates.Render(w, "content.html", map[string]interface{}{
 		"Path":      "content" + urlpath,
 		"Items":     items,
 		"HasReadme": hasreadme,
 		"Readme":    readme,
 	})
-	// return
 }
