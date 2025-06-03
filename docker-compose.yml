@@ -1,0 +1,29 @@
+services:
+  app:
+    build:
+      context: .
+    container_name: goweb
+    expose:
+      - "3000"
+    networks:
+      - webnet
+
+  caddy:
+    image: caddy:latest
+    container_name: caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - webnet
+
+volumes:
+  caddy_data:
+  caddy_config:
+
+networks:
+  webnet:
