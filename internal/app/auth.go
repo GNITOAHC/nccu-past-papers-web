@@ -76,6 +76,8 @@ func (a *App) Login(w http.ResponseWriter, r *http.Request) {
 			SameSite: http.SameSiteLaxMode,
 		})
 
+		log.Printf("Login attempt for email: %s", email)
+
 		if _, ok := a.usercache.Get(email); ok { // Has user in cache
 			http.Redirect(w, r, "/content", http.StatusSeeOther)
 			return
