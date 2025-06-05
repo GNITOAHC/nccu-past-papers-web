@@ -1,14 +1,17 @@
 package app
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"time"
 
 	"past-papers-web/internal/config"
+	"past-papers-web/internal/database"
 	"past-papers-web/internal/helper"
 	"past-papers-web/pkg/cache"
 	"past-papers-web/pkg/mailer"
@@ -37,6 +40,14 @@ func StartServer() {
 	}
 
 	app := NewApp()
+
+	// Initialize database connection
+	conn := os.Getenv("TURSO_CONN")
+	if conn == "" {
+		log.Fatal("TURSO_CONN environment variable is not set")
+	}
+	database.Connect(conn)
+	defer database.Disconnect()
 
 	templates.NewTemplates()
 
@@ -109,7 +120,15 @@ func (a *App) loginProtect(next http.HandlerFunc) http.HandlerFunc {
 			next.ServeHTTP(w, r)
 			return
 		}
-		if a.helper.CheckUser(cookie.Value) { // Has user in DB
+
+		// Check if user exists in the database
+		res, err := database.CheckUser(cookie.Value, context.Background())
+		if err != nil {
+			log.Printf("Error checking user in login protect middleware: %v", err)
+			http.Redirect(w, r, "/", http.StatusSeeOther)
+			return
+		}
+		if res.Exist {
 			a.usercache.Set(cookie.Value, true, time.Duration(time.Hour*720))
 			next.ServeHTTP(w, r)
 			return

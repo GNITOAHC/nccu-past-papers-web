@@ -5,6 +5,7 @@ import (
 	"log"
 	"math/big"
 	"net/http"
+	"past-papers-web/internal/database"
 	"past-papers-web/templates"
 	"past-papers-web/templates/mail"
 	"strings"
@@ -47,6 +48,7 @@ func (a *App) Register(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+
 	otp, err := generateOTP()
 	if err != nil {
 		http.Error(w, "Failed to generate OTP", http.StatusInternalServerError)
@@ -55,12 +57,8 @@ func (a *App) Register(w http.ResponseWriter, r *http.Request) {
 	a.otpcache.Set(email, UserReg{
 		Email: email, Name: name, StudentId: studentId, OTP: otp,
 	}, time.Duration(time.Minute*10))
-	success := a.helper.RegisterUser(email, name, studentId)
-	if !success {
-		http.Error(w, "Failed to register user", http.StatusInternalServerError)
-		return
-	}
-	w.Write([]byte("Success, please check your email and wait for approval.")) // Write to response first
+
+	w.Write([]byte("Success, please check your email and for one time passcode.")) // Write to response first
 
 	// Send mail to user
 	data := map[string]interface{}{"Name": name, "OTP": otp}
@@ -82,7 +80,13 @@ func (a *App) Login(w http.ResponseWriter, r *http.Request) {
 			http.Redirect(w, r, "/content", http.StatusSeeOther)
 			return
 		}
-		if a.helper.CheckUser(email) { // Has user in DB
+		res, err := database.CheckUser(email, r.Context())
+		if err != nil {
+			log.Print("Error checking user in login: ", err)
+			http.Redirect(w, r, "/", http.StatusSeeOther)
+			return
+		}
+		if res.Exist {
 			a.usercache.Set(email, true, time.Duration(time.Hour*720)) // Set cache for 30 days
 			http.Redirect(w, r, "/content", http.StatusSeeOther)
 			return
@@ -103,7 +107,7 @@ func (a *App) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 	email := r.FormValue("email")
 	otp := r.FormValue("otp")
 	if email == "" || otp == "" {
-        log.Println("Missing Email or OTP; user: ", email, "; otp: ", otp)
+		log.Println("Missing Email or OTP; user: ", email, "; otp: ", otp)
 		http.Error(w, "Missing Email or OTP", http.StatusBadRequest)
 		return
 	}
@@ -117,8 +121,9 @@ func (a *App) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := a.helper.ApproveRegistration(info.Email, info.Name, info.StudentId)
+	err := database.RegisterUser(info.Email, info.Name, info.StudentId, r.Context())
 	if err != nil {
+		log.Println("Error registering user: (", info.Email, info.Name, info.StudentId, ") ", err)
 		http.Error(w, "Failed to register user", http.StatusInternalServerError)
 		return
 	}
